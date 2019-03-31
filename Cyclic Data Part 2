@@ -1,0 +1,355 @@
+import tester.*;
+
+// represents a list of Person's buddies
+class ConsLoBuddy implements ILoBuddy {
+
+  Person first;
+  ILoBuddy rest;
+
+  ConsLoBuddy(Person first, ILoBuddy rest) {
+    this.first = first;
+    this.rest = rest;
+  }
+
+  // makes a new list including the new buddy
+  public ILoBuddy addBuddy(Person buddy) {
+    return new ConsLoBuddy(buddy, this);
+  }
+
+  // does this list of buddies contain the given person
+  public boolean contains(Person p) {
+    return this.first.samePerson(p) || this.rest.contains(p);
+  }
+
+  // counts number of people common to this list and given list
+  public int countCommonBuddies(ILoBuddy buddies) {
+    if (buddies.contains(this.first)) {
+      return 1 + this.rest.countCommonBuddies(buddies);
+    }
+    else {
+      return this.rest.countCommonBuddies(buddies);
+    }
+  }
+
+  // creates a new list of all extended buddies of the people in this list
+  public ILoBuddy getExtendedBuddies(ILoBuddy alreadyVisited) {
+    if (alreadyVisited.contains(this.first)) {
+      return this.rest.getExtendedBuddies(alreadyVisited);
+    }
+    else {
+      return this.first.getExtendedBuddiesHelp(alreadyVisited)
+          .append(this.rest.getExtendedBuddies(alreadyVisited));
+    }
+  }
+
+  // appends given list to the end of this one, removes duplicates
+  public ILoBuddy append(ILoBuddy buddies) {
+    if (buddies.contains(this.first)) {
+      return this.rest.append(buddies);
+    }
+    else {
+      return new ConsLoBuddy(this.first, this.rest.append(buddies));
+    }
+  }
+
+  // returns length of this list
+  public int length() {
+    return 1 + this.rest.length();
+  }
+
+  // try to send message to given person, return maximum likelihood it reaches
+  // them correctly
+  public double sendMessage(Person dst, ILoBuddy alreadyVisited) {
+    if (alreadyVisited.contains(this.first)) {
+      return this.rest.sendMessage(dst, alreadyVisited);
+    }
+    else if (this.first.samePerson(dst)) {
+      return this.first.hearing;
+    }
+    else {
+      return Math.max(this.first.maxLikelihoodHelp(dst, alreadyVisited) * this.first.hearing,
+          this.rest.sendMessage(dst, alreadyVisited));
+    }
+  }
+}
+
+// represents a list of Person's buddies
+interface ILoBuddy {
+  // makes a new list including the new buddy
+  ILoBuddy addBuddy(Person buddy);
+
+  // does this list of buddies contain the given person
+  boolean contains(Person p);
+
+  // counts number of people common to this list and given list
+  int countCommonBuddies(ILoBuddy buddies);
+
+  // creates a new list of all extended buddies of everyone in this list, avoiding
+  // searching people again
+  ILoBuddy getExtendedBuddies(ILoBuddy alreadyVisited);
+
+  // appends given list to the end of this one, removing duplicates
+  ILoBuddy append(ILoBuddy buddies);
+
+  // returns length of this list
+  int length();
+
+  // try to send message to given person, return maximum likelihood it reaches
+  // them correctly
+  double sendMessage(Person dst, ILoBuddy alreadyVisited);
+}
+
+
+// represents an empty list of Person's buddies
+class MTLoBuddy implements ILoBuddy {
+  // makes a new list including the new buddy
+  public ILoBuddy addBuddy(Person buddy) {
+    return new ConsLoBuddy(buddy, this);
+  }
+
+  // does this list of buddies contain the given person
+  public boolean contains(Person p) {
+    return false;
+  }
+
+  // counts number of people common to this list and given list
+  public int countCommonBuddies(ILoBuddy buddies) {
+    return 0;
+  }
+
+  // creates a new list of all extended buddies of the people in this list
+  public ILoBuddy getExtendedBuddies(ILoBuddy alreadyVisited) {
+    return new MTLoBuddy();
+  }
+
+  // appends given list to the end of this one
+  public ILoBuddy append(ILoBuddy buddies) {
+    return buddies;
+  }
+
+  // returns length of this list
+  public int length() {
+    return 0;
+  }
+
+  // try to send message to given person, return maximum likelihood it reaches
+  // them correctly
+  public double sendMessage(Person dst, ILoBuddy alreadyVisited) {
+    return 0;
+  }
+}
+
+// represents a Person with a user name and a list of buddies
+class Person {
+
+  String username;
+  ILoBuddy buddies;
+  double diction;
+  double hearing;
+
+  Person(String username) {
+    this.username = username;
+    this.buddies = new MTLoBuddy();
+    this.diction = 0.0;
+    this.hearing = 0.0;
+  }
+
+  Person(String username, double diction, double hearing) {
+    this.username = username;
+    this.buddies = new MTLoBuddy();
+    this.diction = diction;
+    this.hearing = hearing;
+  }
+
+  // EFFECT:
+  // change this person's buddy list so that it includes the given person
+  void addBuddy(Person buddy) {
+    this.buddies = this.buddies.addBuddy(buddy);
+  }
+
+  // returns true if this person is the same as the given person
+  boolean samePerson(Person other) {
+    return this.username.equals(other.username);
+  }
+
+  // returns true if this Person has that as a direct buddy
+  boolean hasDirectBuddy(Person that) {
+    return this.buddies.contains(that);
+  }
+
+  // returns the number of people who will show up at the party
+  // given by this person
+  int partyCount() {
+    if (this.getExtendedBuddies().contains(this)) {
+      return this.getExtendedBuddies().length();
+    }
+    else {
+      return 1 + this.getExtendedBuddies().length();
+    }
+  }
+
+  // returns the number of people that are direct buddies
+  // of both this and that person
+  int countCommonBuddies(Person that) {
+    return this.buddies.countCommonBuddies(that.buddies);
+  }
+
+  // will the given person be invited to a party
+  // organized by this person?
+  boolean hasExtendedBuddy(Person that) {
+    return this.getExtendedBuddies().contains(that);
+  }
+
+  // returns list of all extended buddies
+  ILoBuddy getExtendedBuddies() {
+    return this.getExtendedBuddiesHelp(new ConsLoBuddy(this, new MTLoBuddy()));
+  }
+
+  // returns list of all extended buddies
+  ILoBuddy getExtendedBuddiesHelp(ILoBuddy alreadyVisited) {
+    return this.buddies
+        .append(this.buddies.getExtendedBuddies(new ConsLoBuddy(this, alreadyVisited)));
+  }
+
+  // computes best possible likelihood that this person will be able to
+  // successfully send message to given person
+  double maxLikelihood(Person that) {
+    if (this.samePerson(that)) {
+      return 1.0;
+    }
+    else {
+      return this.maxLikelihoodHelp(that, new ConsLoBuddy(this, new MTLoBuddy()));
+    }
+  }
+
+  // computes maximum likelihood, keeping track of people already visited
+  double maxLikelihoodHelp(Person that, ILoBuddy alreadyVisited) {
+    if (this.hasExtendedBuddy(that)) {
+      return this.diction * this.buddies.sendMessage(that, new ConsLoBuddy(this, alreadyVisited));
+    }
+    else {
+      return 0;
+    }
+  }
+
+}
+
+
+// runs tests for the buddies problem
+class ExamplesBuddies {
+  Person ann;
+  Person bob;
+  Person cole;
+  Person dan;
+  Person ed;
+  Person fay;
+  Person gabi;
+  Person hank;
+  Person jan;
+  Person kim;
+  Person len;
+  Person a;
+  Person b;
+  Person c;
+  Person d;
+  Person e;
+
+  void initBuddies() {
+    ann = new Person("Ann");
+    bob = new Person("Bob");
+    cole = new Person("Cole");
+    dan = new Person("Dan");
+    ed = new Person("Ed");
+    fay = new Person("Fay");
+    gabi = new Person("Gabi");
+    hank = new Person("Hank");
+    jan = new Person("Jan");
+    kim = new Person("Kim");
+    len = new Person("Len");
+    this.ann.addBuddy(this.bob);
+    this.ann.addBuddy(this.cole);
+    this.bob.addBuddy(this.ann);
+    this.bob.addBuddy(this.ed);
+    this.bob.addBuddy(this.hank);
+    this.cole.addBuddy(this.dan);
+    this.dan.addBuddy(this.cole);
+    this.ed.addBuddy(this.fay);
+    this.fay.addBuddy(this.ed);
+    this.fay.addBuddy(this.gabi);
+    this.gabi.addBuddy(this.ed);
+    this.gabi.addBuddy(this.fay);
+    this.jan.addBuddy(this.kim);
+    this.jan.addBuddy(this.len);
+    this.kim.addBuddy(this.jan);
+    this.kim.addBuddy(this.len);
+    this.len.addBuddy(this.jan);
+    this.len.addBuddy(this.kim);
+    this.a = new Person("A", 0.95, 0.8);
+    this.b = new Person("B", 0.85, 0.99);
+    this.c = new Person("C", 0.95, 0.9);
+    this.d = new Person("D", 1.0, 0.95);
+    this.e = new Person("E");
+    this.a.addBuddy(this.b);
+    this.a.addBuddy(this.c);
+    this.b.addBuddy(this.d);
+    this.c.addBuddy(this.d);
+  }
+
+  void testSamePerson(Tester t) {
+    initBuddies();
+    t.checkExpect(this.ann.samePerson(this.ann), true);
+    t.checkExpect(this.ann.samePerson(this.bob), false);
+  }
+
+  void testHasDirectBuddy(Tester t) {
+    initBuddies();
+    t.checkExpect(this.ann.hasDirectBuddy(this.bob), true);
+    t.checkExpect(this.cole.hasDirectBuddy(this.fay), false);
+    t.checkExpect(this.kim.hasDirectBuddy(this.kim), false);
+  }
+
+  void testCountCommonBuddies(Tester t) {
+    initBuddies();
+    t.checkExpect(this.fay.countCommonBuddies(this.gabi), 1);
+    t.checkExpect(this.ann.countCommonBuddies(this.hank), 0);
+    t.checkExpect(this.jan.countCommonBuddies(this.jan), 2);
+    t.checkExpect(this.ann.countCommonBuddies(this.bob), 0);
+  }
+
+  void testHasExtendedBuddy(Tester t) {
+    initBuddies();
+    t.checkExpect(this.ann.hasExtendedBuddy(this.bob), true);
+    t.checkExpect(this.ann.hasExtendedBuddy(this.fay), true);
+    t.checkExpect(this.hank.hasExtendedBuddy(this.jan), false);
+    t.checkExpect(this.dan.hasExtendedBuddy(this.kim), false);
+    t.checkExpect(this.fay.hasExtendedBuddy(this.fay), true);
+  }
+
+  void testPartyCount(Tester t) {
+    initBuddies();
+    t.checkExpect(this.hank.partyCount(), 1);
+    t.checkExpect(this.cole.partyCount(), 2);
+    t.checkExpect(this.kim.partyCount(), 3);
+    t.checkExpect(this.ann.partyCount(), 8);
+  }
+
+  void testMaxLikelihood(Tester t) {
+    initBuddies();
+    t.checkInexact(this.a.maxLikelihood(this.d), 0.772, 0.001);
+    t.checkInexact(this.a.maxLikelihood(this.a), 1.0, 0.001);
+  }
+
+  void testMaxLikelihoodHelp(Tester t) {
+    initBuddies();
+    t.checkInexact(this.a.maxLikelihoodHelp(this.d, new MTLoBuddy()), 0.772, 0.001);
+    t.checkInexact(this.c.maxLikelihoodHelp(this.e, new ConsLoBuddy(this.b, new MTLoBuddy())), 0.0,
+        0.001);
+  }
+
+  void testGetExtendedBuddies(Tester t) {
+    initBuddies();
+    t.checkExpect(this.dan.getExtendedBuddies(),
+        new ConsLoBuddy(this.cole, new ConsLoBuddy(this.dan, new MTLoBuddy())));
+    t.checkExpect(this.hank.getExtendedBuddies(), new MTLoBuddy());
+  }
+}
