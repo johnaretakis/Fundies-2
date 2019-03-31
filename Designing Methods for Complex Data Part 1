@@ -1,0 +1,604 @@
+import tester.Tester;
+
+//A class to represent a place and its Features
+class Place {
+  String name;
+  ILoFeature features;
+
+  Place(String name, ILoFeature features) {
+    this.name = name;
+    this.features = features;
+  }
+  /*
+   * TEMPLATE:
+   * ----------
+   * Fields:
+   * ...this.name... -- String
+   * ...this.features... -- ILoFeature
+   * Methods:
+   * ...this.totalCapacity() -- int
+   * ...this.foodinessRating()... -- double
+   * ...this.sumAvgRating()... -- double
+   * ...this.countRestaurants()... -- int
+   * ...this.restaurantInfo()... -- String
+   * ...this.restaurantInfoHelp()... -- String
+   * Methods of Fields:
+   * ...this.features.totalCapacityLoFeature()... -- int
+   * ...this.features.sumAvgRatingLoFeature()... -- double
+   * ...this.countRestaurantsLoFeature()... -- int
+   * ...restaurantInfoLoFeature()... -- String
+   */
+
+  // Computes the total available seating in all the venues reachable from this
+  // Place
+  int totalCapacity() {
+    return this.features.totalCapacityLoFeature();
+  }
+
+  // Computes the average rating of all the restaurants' ratings, for all the
+  // restaurants reachable from this Place
+  double foodinessRating() {
+    if (this.countRestaurants() == 0) {
+      return 0;
+    }
+    else {
+      return this.sumAvgRating() / this.countRestaurants();
+    }
+  }
+
+  // Sums the average ratings of Restaurants reachable from this Place
+  double sumAvgRating() {
+    return this.features.sumAvgRatingLoFeature();
+  }
+
+  // Counts how any Restaurants are reachable from this Place
+  int countRestaurants() {
+    return this.features.countRestaurantsLoFeature();
+  }
+
+  // Produces one String that has in it all names of restaurants reachable from a
+  // place, their food types in parentheses, and each restaurant separated by
+  // comma and space. (without extra commas and spaces)
+  String restaurantInfo() {
+    if (this.restaurantInfoHelp().equals("")) {
+      return "";
+    }
+    else {
+      return restaurantInfoHelp().substring(2);
+    }
+  }
+
+  // Produces one String that has in it all names of restaurants reachable from a
+  // place, their food types in parentheses, and each restaurant separated by a
+  // comma and a space. (with extra commas and spaces)
+  String restaurantInfoHelp() {
+    return this.features.restaurantInfoLoFeature();
+  }
+}
+
+// An interface to represent a list of Features
+interface ILoFeature {
+
+  // Computes the total available seating in all the venues reachable from this
+  // ILoFeature
+  int totalCapacityLoFeature();
+
+  // Computes the average rating of all the Restaurants' ratings, for all the
+  // Restaurants reachable from this ILoFeature
+  double sumAvgRatingLoFeature();
+
+  // Counts how many Restaurants are reachable in this ILoFeature
+  int countRestaurantsLoFeature();
+
+  // Produces one String that has in it all names of Restaurants reachable from a
+  // ILoFeature, their food types in parentheses, and each Restaurant separated
+  // by a comma and a space.
+  String restaurantInfoLoFeature();
+
+}
+
+// A class to represent an empty list of Features
+class MtLoFeature implements ILoFeature {
+
+  MtLoFeature() {
+  }
+  /*
+   * TEMPLATE:
+   * ----------
+   * Methods:
+   * ...this.totalCapacityLoFeature() -- int
+   * ...this.sumAvgRatingLoFeature() -- double
+   * ...this.countRestaurantsLoFeature() -- int
+   * ...this.restaurantInfoLoFeature()... -- String
+   */
+
+  // Computes the total available seating in all the venues reachable from this
+  // MtLoFeature (0)
+  public int totalCapacityLoFeature() {
+    return 0;
+  }
+
+  // Computes the average rating of all the restaurants' ratings, for all the
+  // restaurants reachable from this MtFeatures (0)
+  public double sumAvgRatingLoFeature() {
+    return 0;
+  }
+
+  // Counts how many restaurants are reachable in this MtFeatures (0)
+  public int countRestaurantsLoFeature() {
+    return 0;
+  }
+
+  // Produces one String that has in it all names of restaurants reachable from a
+  // MtFeatures, their food types in parentheses, and each restaurant separated by
+  // a comma and a space.
+  public String restaurantInfoLoFeature() {
+    return "";
+  }
+
+}
+
+// A class to represent a non-empty list of features
+class ConsLoFeature implements ILoFeature {
+  IFeature first;
+  ILoFeature rest;
+
+  ConsLoFeature(IFeature first, ILoFeature rest) {
+    this.first = first;
+    this.rest = rest;
+  }
+  /*
+   * TEMPLATE:
+   * ----------
+   * Fields:
+   * ...this.first... -- Feature
+   * ...this.rest... -- ILoFeature
+   * Methods:
+   * ...this.totalCapacityLoFeature() -- int
+   * ...this.sumAvgRatingLoFeature() -- double
+   * ...this.countRestaurantsLoFeature() -- int
+   * ...this.restaurantInfoLoFeature()... -- String
+   * Methods of Fields:
+   * ...this.rest.totalCapacityLoFeature() -- int
+   * ...this.rest.sumAvgRatingLoFeature() -- double
+   * ...this.rest.countRestaurantsLoFeature() -- int
+   * ...this.rest.restaurantInfoLoFeature()... -- String
+   */
+
+  // Computes the total available seating in all the venues reachable from this
+  // ConsLoFeature
+  public int totalCapacityLoFeature() {
+    return this.first.totalCapacityFeatures() + this.rest.totalCapacityLoFeature();
+  }
+
+  // Computes the average rating of all the restaurants' ratings, for all the
+  // restaurants reachable from this ConsLoFeature
+  public double sumAvgRatingLoFeature() {
+    return this.first.sumAvgRatingFeatures() + this.rest.sumAvgRatingLoFeature();
+  }
+
+  // Counts how many restaurants are reachable in this ConsLoFeature
+  public int countRestaurantsLoFeature() {
+    return this.first.countRestaurantsFeatures() + this.rest.countRestaurantsLoFeature();
+  }
+
+  // Produces one String that has in it all names of restaurants reachable from a
+  // place, their food types in parentheses, and each restaurant separated by
+  // a comma and a space.
+  public String restaurantInfoLoFeature() {
+    return this.first.restaurantInfoFeatures() + this.rest.restaurantInfoLoFeature();
+  }
+}
+
+//An interface to represent a feature
+interface IFeature {
+
+  // Returns the total available seating in all the venues reachable from this
+  // IFeature
+  int totalCapacityFeatures();
+
+  // Returns the average rating all the Restaurants reachable from this IFeature
+  double sumAvgRatingFeatures();
+
+  // Returns how many Restaurants are reachable from this IFeature
+  int countRestaurantsFeatures();
+
+  // Produces one String that has in it all names of restaurants reachable from
+  // this Feature, their food types in parentheses, and each restaurant separated
+  // by
+  // a comma and a space.
+  String restaurantInfoFeatures();
+
+}
+
+// A class to represent a restaurant
+class Restaurant implements IFeature {
+  String name;
+  String type;
+  double averageRating;
+
+  Restaurant(String name, String type, double averageRating) {
+    this.name = name;
+    this.type = type;
+    this.averageRating = averageRating;
+  }
+  /*
+   * TEMPLATE
+   * ----------
+   * Fields:
+   * ...this.name... -- String
+   * ...this.type... -- String
+   * ...this.averageRating... -- double
+   * Methods:
+   * ...this.totalCapacityFeatures()... -- int
+   * ...this.sumAvgRatingFeatures()... -- double
+   * ...this.countRestaurantsFeatures()... -- int
+   * ...this.restaurantInfoFeatures()... -- String
+   */
+
+  // Returns the total available seating in all the Venues reachable from this
+  // Restaurant (0)
+  public int totalCapacityFeatures() {
+    return 0;
+  }
+
+  // Returns the average rating all the Restaurants reachable from this Restaurant
+  public double sumAvgRatingFeatures() {
+    return this.averageRating;
+  }
+
+  // Returns how many Restaurants are reachable from this Restaurant (1)
+  public int countRestaurantsFeatures() {
+    return 1;
+  }
+
+  // Produces one String that has in it all names of restaurants reachable from
+  // this Restaurant, their food types in parentheses, and each restaurant
+  // separated by
+  // a comma and a space.
+  public String restaurantInfoFeatures() {
+    return ", " + this.name + " (" + this.type + ")";
+  }
+}
+
+// A class to represent a venue
+class Venue implements IFeature {
+  String name;
+  String type;
+  int capacity;
+
+  Venue(String name, String type, int capacity) {
+    this.name = name;
+    this.type = type;
+    this.capacity = capacity;
+  }
+  /*
+   * TEMPLATE:
+   * ----------
+   * Fields:
+   * ...this.name... -- String
+   * ...this.type... -- String
+   * ...this.capacity... -- int
+   * Methods:
+   * ...this.totalCapacityFeatures()... -- int
+   * ...this.sumAvgRatingFeatures()... -- double
+   * ...this.countRestaurantsFeatures()... -- int
+   * ...this.restaurantInfoFeatures()... -- String
+   */
+
+  // Returns the total available seating in all the Venues reachable from this
+  // Venue (this.capacity)
+  public int totalCapacityFeatures() {
+    return this.capacity;
+  }
+
+  // Returns the average rating all the Restaurants reachable from this Venue (0)
+  public double sumAvgRatingFeatures() {
+    return 0;
+  }
+
+  // Returns how many Restaurants are reachable from this Venue (0)
+  public int countRestaurantsFeatures() {
+    return 0;
+  }
+
+  // Produces one String that has in it all names of restaurants reachable from
+  // this Venue, their food types in parentheses, and each restaurant separated by
+  // a comma and a space. (in this case returns "")
+  public String restaurantInfoFeatures() {
+    return "";
+  }
+}
+
+//A class to represent a shuttle bus
+class ShuttleBus implements IFeature {
+  String name;
+  Place destination;
+
+  ShuttleBus(String name, Place destination) {
+    this.name = name;
+    this.destination = destination;
+  }
+  /*
+   * TEMPLATE:
+   * ----------
+   * Fields:
+   * ...this.name... -- String
+   * ...this.destination... -- Place
+   * Methods:
+   * ...this.totalCapacityFeatures()... -- int
+   * ...this.sumAvgRatingFeatures()... -- double
+   * ...this.countRestaurantsFeatures()... -- int
+   * ...this.restaurantInfoFeatures()... -- String
+   * Methods for Fields:
+   * ...this.destination.totalCapacity() -- int
+   * ...this.destination.foodinessRating()... -- double
+   * ...this.destination.sumAvgRating()... -- double
+   * ...this.destination.countRestaurants()... -- int
+   * ...this.destination.restaurantInfo()... -- String
+   * ...this.destination.restaurantInfoHelp()... -- String
+   */
+
+  // Returns the total available seating in all the Venues reachable from this
+  // ShuttleBus
+  public int totalCapacityFeatures() {
+    return this.destination.totalCapacity();
+  }
+
+  // Returns the average rating all the Restaurants reachable from this ShuttleBus
+  public double sumAvgRatingFeatures() {
+    return this.destination.sumAvgRating();
+  }
+
+  // Returns how many Restaurants are reachable from this ShuttleBus
+  public int countRestaurantsFeatures() {
+    return this.destination.countRestaurants();
+  }
+
+  // Produces one String that has in it all names of restaurants reachable from
+  // this ShuttleBus, their food types in parentheses, and each restaurant
+  // separated by
+  // comma and space.
+  public String restaurantInfoFeatures() {
+    return this.destination.restaurantInfoHelp();
+  }
+}
+
+class ExamplesPlaces {
+  /*
+   * A Place called Northeastern has a venue called Matthews Arena (whose type is
+   * hockey and capacity is 5000), and a shuttle bus called Bus 1 to Boston
+   * University.
+   * A Place called Boston University has a restaurant called
+   * McDonalds (whose type is fast food and average rating 4.0 stars), and a
+   * shuttle bus called Bus 2 to Northeastern University.
+   * A Place called Boston
+   * College has a restaurant called Burger King (whose type is burgers and has an
+   * average rating of 3.5 stars), has a shuttle bus called Bus 3 to Northeastern
+   * and another shuttle called Bus 4 to Boston University.
+   * A Place called Ruggles
+   * has no features.
+   */
+
+  ILoFeature mtFeatures = new MtLoFeature();
+  Place mtPlace = new Place("Empty", mtFeatures);
+
+  // Ruggles
+  Place ruggles = new Place("ruggles", mtFeatures);
+
+  // Northeastern
+  IFeature matthews = new Venue("Matthews Arena", "hockey", 5000);
+  IFeature bus1 = new ShuttleBus("Bus 1", ruggles);
+  ILoFeature northeasternFeatures = new ConsLoFeature(this.matthews,
+      new ConsLoFeature(this.bus1, mtFeatures));
+  Place northeastern = new Place("Northeastern University", northeasternFeatures);
+
+  // Boston University
+  IFeature mcDonalds = new Restaurant("McDonald's", "fast food", 4.0);
+  IFeature bus2 = new ShuttleBus("Bus 2", northeastern);
+  ILoFeature bostonUniFeatures = new ConsLoFeature(this.mcDonalds,
+      new ConsLoFeature(this.bus2, mtFeatures));
+  Place bostonUni = new Place("Boston University", bostonUniFeatures);
+
+  // Boston College
+  IFeature bk = new Restaurant("Burger King", "burgers", 3.5);
+  IFeature bus3 = new ShuttleBus("Bus 3", northeastern);
+  IFeature bus4 = new ShuttleBus("Bus 4", bostonUni);
+  ILoFeature bostonCollegeFeatures = new ConsLoFeature(this.bk,
+      new ConsLoFeature(this.bus3, new ConsLoFeature(this.bus4, mtFeatures)));
+  Place bostonCollege = new Place("Boston College", bostonCollegeFeatures);
+
+  // North End
+  IFeature tdGarden = new Venue("TD Garden", "stadium", 19580);
+  IFeature dailyCatch = new Restaurant("The Daily Catch", "Sicilian", 4.4);
+  ILoFeature northEndFeatures = new ConsLoFeature(this.tdGarden,
+      new ConsLoFeature(this.dailyCatch, mtFeatures));
+  Place northEnd = new Place("North End", northEndFeatures);
+
+  // Harvard
+  IFeature freshman15 = new ShuttleBus("Freshmen-15", northEnd);
+  IFeature borderCafe = new Restaurant("Border Cafe", "Tex-Mex", 4.5);
+  IFeature harvardStadium = new Venue("Harvard Stadium", "football", 30323);
+  ILoFeature harvardFeatures = new ConsLoFeature(this.freshman15,
+      new ConsLoFeature(this.borderCafe, new ConsLoFeature(this.harvardStadium, mtFeatures)));
+  Place harvard = new Place("Harvard", harvardFeatures);
+
+  // South Station
+  IFeature littleItalyExpress = new ShuttleBus("Little Italy Express", northEnd);
+  IFeature reginasPizza = new Restaurant("Regina's Pizza", "pizza", 4.0);
+  IFeature crimsonCruiser = new ShuttleBus("Crimson Cruiser", harvard);
+  IFeature bostonCommon = new Venue("Boston Common", "public", 150000);
+  ILoFeature southStationFeatures = new ConsLoFeature(this.littleItalyExpress,
+      new ConsLoFeature(this.reginasPizza,
+          new ConsLoFeature(this.crimsonCruiser,
+              new ConsLoFeature(this.bostonCommon, mtFeatures))));
+  Place southStation = new Place("South Station", southStationFeatures);
+
+  // CambridgeSide Galleria
+  IFeature sarkuJapan = new Restaurant("Sarku Japan", "teriyaki", 3.9);
+  IFeature starbucks = new Restaurant("Starbucks", "coffee", 4.1);
+  IFeature bridgeShuttle = new ShuttleBus("bridge shuttle", this.southStation);
+  ILoFeature cambridgeFeatures = new ConsLoFeature(this.sarkuJapan,
+      new ConsLoFeature(this.starbucks, new ConsLoFeature(this.bridgeShuttle, mtFeatures)));
+  Place cambridgeSide = new Place("CambridgeSide Galleria", this.cambridgeFeatures);
+
+  boolean testTotalCapacity(Tester t) {
+    return t.checkExpect(this.mtPlace.totalCapacity(), 0)
+        && t.checkExpect(this.northEnd.totalCapacity(), 19580)
+        && t.checkExpect(this.harvard.totalCapacity(), 49903)
+        && t.checkExpect(this.southStation.totalCapacity(), 219483)
+        && t.checkExpect(this.cambridgeSide.totalCapacity(), 219483);
+  }
+
+  boolean testTotalCapacityLoFeature(Tester t) {
+    return t.checkExpect(this.mtFeatures.totalCapacityLoFeature(), 0)
+        && t.checkExpect(this.northEndFeatures.totalCapacityLoFeature(), 19580)
+        && t.checkExpect(this.harvardFeatures.totalCapacityLoFeature(), 49903)
+        && t.checkExpect(this.southStationFeatures.totalCapacityLoFeature(), 219483)
+        && t.checkExpect(this.cambridgeFeatures.totalCapacityLoFeature(), 219483);
+  }
+
+  boolean testTotalCapacityFeatures(Tester t) {
+    return t.checkExpect(this.tdGarden.totalCapacityFeatures(), 19580)
+        && t.checkExpect(this.dailyCatch.totalCapacityFeatures(), 0)
+        && t.checkExpect(this.freshman15.totalCapacityFeatures(), 19580)
+        && t.checkExpect(this.borderCafe.totalCapacityFeatures(), 0)
+        && t.checkExpect(this.harvardStadium.totalCapacityFeatures(), 30323)
+        && t.checkExpect(this.littleItalyExpress.totalCapacityFeatures(), 19580)
+        && t.checkExpect(this.reginasPizza.totalCapacityFeatures(), 0)
+        && t.checkExpect(this.crimsonCruiser.totalCapacityFeatures(), 49903)
+        && t.checkExpect(this.bostonCommon.totalCapacityFeatures(), 150000)
+        && t.checkExpect(this.sarkuJapan.totalCapacityFeatures(), 0)
+        && t.checkExpect(this.starbucks.totalCapacityFeatures(), 0)
+        && t.checkExpect(this.bridgeShuttle.totalCapacityFeatures(), 219483);
+  }
+
+  boolean testFoodinessRating(Tester t) {
+    return t.checkInexact(this.mtPlace.foodinessRating(), 0.0, 0.00001)
+        && t.checkInexact(this.northEnd.foodinessRating(), 4.4, 0.00001)
+        && t.checkInexact(this.harvard.foodinessRating(), 4.45, 0.00001)
+        && t.checkInexact(this.southStation.foodinessRating(), 4.325, 0.00001)
+        && t.checkInexact(this.cambridgeSide.foodinessRating(), 4.2167, 0.00001);
+  }
+
+  boolean testSumAvgRating(Tester t) {
+    return t.checkInexact(this.mtPlace.sumAvgRating(), 0.0, 0.00001)
+        && t.checkInexact(this.northEnd.sumAvgRating(), 4.4, 0.00001)
+        && t.checkInexact(this.harvard.sumAvgRating(), 8.9, 0.00001)
+        && t.checkInexact(this.southStation.sumAvgRating(), 17.3, 0.00001)
+        && t.checkInexact(this.cambridgeSide.sumAvgRating(), 25.3, 0.00001);
+  }
+
+  boolean testSumAvgRatingLoFeature(Tester t) {
+    return t.checkInexact(this.mtFeatures.sumAvgRatingLoFeature(), 0.0, 0.00001)
+        && t.checkInexact(this.northEndFeatures.sumAvgRatingLoFeature(), 4.4, 0.00001)
+        && t.checkInexact(this.harvardFeatures.sumAvgRatingLoFeature(), 8.9, 0.00001)
+        && t.checkInexact(this.southStationFeatures.sumAvgRatingLoFeature(), 17.3, 0.00001)
+        && t.checkInexact(this.cambridgeFeatures.sumAvgRatingLoFeature(), 25.3, 0.00001);
+  }
+
+  boolean testSumAvgRatingFeatures(Tester t) {
+    return t.checkInexact(this.tdGarden.sumAvgRatingFeatures(), 0.0, 0.00001)
+        && t.checkInexact(this.dailyCatch.sumAvgRatingFeatures(), 4.4, 0.00001)
+        && t.checkInexact(this.freshman15.sumAvgRatingFeatures(), 4.4, 0.00001)
+        && t.checkInexact(this.borderCafe.sumAvgRatingFeatures(), 4.5, 0.00001)
+        && t.checkInexact(this.harvardStadium.sumAvgRatingFeatures(), 0.0, 0.00001)
+        && t.checkInexact(this.littleItalyExpress.sumAvgRatingFeatures(), 4.4, 0.00001)
+        && t.checkInexact(this.reginasPizza.sumAvgRatingFeatures(), 4.0, 0.00001)
+        && t.checkInexact(this.crimsonCruiser.sumAvgRatingFeatures(), 8.9, 0.00001)
+        && t.checkInexact(this.bostonCommon.sumAvgRatingFeatures(), 0.0, 0.00001)
+        && t.checkInexact(this.sarkuJapan.sumAvgRatingFeatures(), 3.9, 0.00001)
+        && t.checkInexact(this.starbucks.sumAvgRatingFeatures(), 4.1, 0.00001)
+        && t.checkInexact(this.bridgeShuttle.sumAvgRatingFeatures(), 17.3, 0.00001);
+  }
+
+  boolean testCountRestaurants(Tester t) {
+    return t.checkExpect(this.mtPlace.countRestaurants(), 0)
+        && t.checkExpect(this.northEnd.countRestaurants(), 1)
+        && t.checkExpect(this.harvard.countRestaurants(), 2)
+        && t.checkExpect(this.southStation.countRestaurants(), 4)
+        && t.checkExpect(this.cambridgeSide.countRestaurants(), 6);
+  }
+
+  boolean testCountRestaurantsLoFeature(Tester t) {
+    return t.checkExpect(this.mtFeatures.countRestaurantsLoFeature(), 0)
+        && t.checkExpect(this.northEndFeatures.countRestaurantsLoFeature(), 1)
+        && t.checkExpect(this.harvardFeatures.countRestaurantsLoFeature(), 2)
+        && t.checkExpect(this.southStationFeatures.countRestaurantsLoFeature(), 4)
+        && t.checkExpect(this.cambridgeFeatures.countRestaurantsLoFeature(), 6);
+  }
+
+  boolean testCountRestaurantsFeatures(Tester t) {
+    return t.checkExpect(this.tdGarden.countRestaurantsFeatures(), 0)
+        && t.checkExpect(this.dailyCatch.countRestaurantsFeatures(), 1)
+        && t.checkExpect(this.freshman15.countRestaurantsFeatures(), 1)
+        && t.checkExpect(this.borderCafe.countRestaurantsFeatures(), 1)
+        && t.checkExpect(this.harvardStadium.countRestaurantsFeatures(), 0)
+        && t.checkExpect(this.littleItalyExpress.countRestaurantsFeatures(), 1)
+        && t.checkExpect(this.reginasPizza.countRestaurantsFeatures(), 1)
+        && t.checkExpect(this.crimsonCruiser.countRestaurantsFeatures(), 2)
+        && t.checkExpect(this.bostonCommon.countRestaurantsFeatures(), 0)
+        && t.checkExpect(this.sarkuJapan.countRestaurantsFeatures(), 1)
+        && t.checkExpect(this.starbucks.countRestaurantsFeatures(), 1)
+        && t.checkExpect(this.bridgeShuttle.countRestaurantsFeatures(), 4);
+  }
+
+  boolean testRestaurantInfo(Tester t) {
+    return t.checkExpect(this.mtPlace.restaurantInfo(), "")
+        && t.checkExpect(this.northEnd.restaurantInfo(), "The Daily Catch (Sicilian)")
+        && t.checkExpect(this.harvard.restaurantInfo(),
+            "The Daily Catch (Sicilian), Border Cafe (Tex-Mex)")
+        && t.checkExpect(this.southStation.restaurantInfo(),
+            "The Daily Catch (Sicilian), Regina's Pizza (pizza), The Daily Catch (Sicilian), "
+                + "Border Cafe (Tex-Mex)")
+        && t.checkExpect(this.cambridgeSide.restaurantInfo(),
+            "Sarku Japan (teriyaki), Starbucks (coffee), The Daily Catch (Sicilian), "
+                + "Regina's Pizza (pizza), The Daily Catch (Sicilian), Border Cafe (Tex-Mex)");
+  }
+
+  boolean testRestaurantInfoHelp(Tester t) {
+    return t.checkExpect(this.mtPlace.restaurantInfoHelp(), "")
+        && t.checkExpect(this.northEnd.restaurantInfoHelp(), ", The Daily Catch (Sicilian)")
+        && t.checkExpect(this.harvard.restaurantInfoHelp(),
+            ", The Daily Catch (Sicilian), Border Cafe (Tex-Mex)")
+        && t.checkExpect(this.southStation.restaurantInfoHelp(),
+            ", The Daily Catch (Sicilian), Regina's Pizza (pizza), The Daily Catch (Sicilian), "
+                + "Border Cafe (Tex-Mex)")
+        && t.checkExpect(this.cambridgeSide.restaurantInfoHelp(),
+            ", Sarku Japan (teriyaki), Starbucks (coffee), The Daily Catch (Sicilian), "
+                + "Regina's Pizza (pizza), The Daily Catch (Sicilian), Border Cafe (Tex-Mex)");
+  }
+
+  boolean testRestaurantInfoLoFeature(Tester t) {
+    return t.checkExpect(this.mtFeatures.restaurantInfoLoFeature(), "")
+        && t.checkExpect(this.northEndFeatures.restaurantInfoLoFeature(),
+            ", The Daily Catch (Sicilian)")
+        && t.checkExpect(this.harvardFeatures.restaurantInfoLoFeature(),
+            ", The Daily Catch (Sicilian), Border Cafe (Tex-Mex)")
+        && t.checkExpect(this.southStationFeatures.restaurantInfoLoFeature(),
+            ", The Daily Catch (Sicilian), Regina's Pizza (pizza), The Daily Catch (Sicilian), "
+                + "Border Cafe (Tex-Mex)")
+        && t.checkExpect(this.cambridgeFeatures.restaurantInfoLoFeature(),
+            ", Sarku Japan (teriyaki), Starbucks (coffee), The Daily Catch (Sicilian), "
+                + "Regina's Pizza (pizza), The Daily Catch (Sicilian), Border Cafe (Tex-Mex)");
+  }
+
+  boolean testRestaurantInfoFeatures(Tester t) {
+    return t.checkExpect(this.tdGarden.restaurantInfoFeatures(), "")
+        && t.checkExpect(this.dailyCatch.restaurantInfoFeatures(), ", The Daily Catch (Sicilian)")
+        && t.checkExpect(this.freshman15.restaurantInfoFeatures(), ", The Daily Catch (Sicilian)")
+        && t.checkExpect(this.borderCafe.restaurantInfoFeatures(), ", Border Cafe (Tex-Mex)")
+        && t.checkExpect(this.harvardStadium.restaurantInfoFeatures(), "")
+        && t.checkExpect(this.littleItalyExpress.restaurantInfoFeatures(),
+            ", The Daily Catch (Sicilian)")
+        && t.checkExpect(this.reginasPizza.restaurantInfoFeatures(), ", Regina's Pizza (pizza)")
+        && t.checkExpect(this.crimsonCruiser.restaurantInfoFeatures(),
+            ", The Daily Catch (Sicilian), Border Cafe (Tex-Mex)")
+        && t.checkExpect(this.bostonCommon.restaurantInfoFeatures(), "")
+        && t.checkExpect(this.sarkuJapan.restaurantInfoFeatures(), ", Sarku Japan (teriyaki)")
+        && t.checkExpect(this.starbucks.restaurantInfoFeatures(), ", Starbucks (coffee)")
+        && t.checkExpect(this.bridgeShuttle.restaurantInfoFeatures(),
+            ", The Daily Catch (Sicilian), Regina's Pizza (pizza), The Daily Catch (Sicilian), "
+                + "Border Cafe (Tex-Mex)");
+  }
+}
