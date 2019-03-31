@@ -1,0 +1,279 @@
+import tester.Tester;
+
+//represents a college course
+class Course {
+  String name;
+  Instructor prof;
+  IList<Student> students;
+
+  Course(String name, Instructor prof, IList<Student> students) {
+    if (prof == null) {
+      throw new IllegalArgumentException("Must provide a professor");
+    }
+    prof.courses = new ConsList<Course>(this, prof.courses);
+    this.name = name;
+    this.prof = prof;
+    this.students = students;
+  }
+
+  Course(String name, Instructor prof) {
+    this(name, prof, new MtList<Student>());
+  }
+
+  // EFFECT: adds the given student to this course
+  // Does not add this course to student's list of courses
+  void addStudent(Student s) {
+    this.students = new ConsList<Student>(s, this.students);
+  }
+}
+
+//represents an instructor for a course
+class Instructor {
+  String name;
+  IList<Course> courses;
+
+  Instructor(String name, IList<Course> courses) {
+    this.name = name;
+    this.courses = courses;
+  }
+
+  Instructor(String name) {
+    this(name, new MtList<Course>());
+  }
+
+  // determines whether the given student is in more than one of this instructor's
+  // courses
+  boolean dejavu(Student c) {
+    return new NumClassesEnrolled(c).apply(this.courses) > 1;
+  }
+}
+
+//represents a college student
+class Student {
+  String name;
+  int id;
+  IList<Course> courses;
+
+  Student(String name, int id, IList<Course> courses) {
+    this.name = name;
+    this.id = id;
+    this.courses = courses;
+  }
+
+  Student(String name, int id) {
+    this(name, id, new MtList<Course>());
+  }
+
+  // EFFECT: adds student to given course, adds this course to this student's list
+  // of courses
+  void enroll(Course c) {
+    c.addStudent(this);
+    this.courses = new ConsList<Course>(c, this.courses);
+  }
+
+  // returns true if this student has same ID as given student
+  boolean sameStudent(Student other) {
+    return this.id == other.id;
+  }
+
+  // returns true if this student shares any of the same classes as the given
+  // student
+  boolean classmates(Student c) {
+    return new Ormap<Course>(new HasStudent(c)).apply(this.courses);
+  }
+}
+
+//represents a list of T
+interface IList<T> {
+  // accepts IListVisitor
+  <R> R accept(IListVisitor<T, R> visitor);
+}
+
+//represents an empty list of T
+class MtList<T> implements IList<T> {
+  // accepts IListVisitor
+  public <R> R accept(IListVisitor<T, R> visitor) {
+    return visitor.visitMtList(this);
+  }
+}
+
+//represents a non-empty list of T
+class ConsList<T> implements IList<T> {
+  T first;
+  IList<T> rest;
+
+  ConsList(T first, IList<T> rest) {
+    this.first = first;
+    this.rest = rest;
+  }
+
+  // accepts an IListVisitor
+  public <R> R accept(IListVisitor<T, R> visitor) {
+    return visitor.visitConsList(this);
+  }
+}
+
+//represents a function on type T which returns R
+interface IFunc<T, R> {
+  // apply function on given arg
+  R apply(T arg);
+}
+
+//visitor which visits IList and applies a function on the list
+interface IListVisitor<T, R> extends IFunc<IList<T>, R> {
+  // apply function to empty list
+  R visitMtList(MtList<T> mt);
+
+  // apply function to non-empty list
+  R visitConsList(ConsList<T> cons);
+}
+
+//returns how many of the given classes the student is enrolled in
+class NumClassesEnrolled implements IListVisitor<Course, Integer> {
+  Student s;
+
+  NumClassesEnrolled(Student s) {
+    this.s = s;
+  }
+
+  // apply function to empty list
+  public Integer visitMtList(MtList<Course> mt) {
+    return 0;
+  }
+
+  // apply function to non-empty list
+  public Integer visitConsList(ConsList<Course> cons) {
+    if (new HasStudent(this.s).apply(cons.first)) {
+      return 1 + this.apply(cons.rest);
+    }
+    else {
+      return this.apply(cons.rest);
+    }
+  }
+
+  // applies the function to the given list of courses
+  public Integer apply(IList<Course> courses) {
+    return courses.accept(this);
+  }
+}
+
+//represents a function on X which returns a boolean
+interface IPred<X> extends IFunc<X, Boolean> {
+  // applies the predicate
+  Boolean apply(X arg);
+}
+
+//determines if the specified student is in the given course
+class HasStudent implements IPred<Course> {
+  Student s;
+
+  HasStudent(Student s) {
+    this.s = s;
+  }
+
+  // applies the predicate to the given course
+  public Boolean apply(Course c) {
+    return new Ormap<Student>(new SameStudent(this.s)).apply(c.students);
+  }
+}
+
+//determines if specified student is the same as the given student
+class SameStudent implements IPred<Student> {
+  Student s;
+
+  SameStudent(Student s) {
+    this.s = s;
+  }
+
+  // applies the predicate to the given student
+  public Boolean apply(Student other) {
+    return this.s.sameStudent(other);
+  }
+}
+
+//returns true if elements in given list are true for the predicate
+class Ormap<T> implements IListVisitor<T, Boolean> {
+  IPred<T> pred;
+
+  Ormap(IPred<T> pred) {
+    this.pred = pred;
+  }
+
+  // visits empty list
+  public Boolean visitMtList(MtList<T> mt) {
+    return false;
+  }
+
+  // visit non-empty list
+  public Boolean visitConsList(ConsList<T> cons) {
+    return this.pred.apply(cons.first) || this.apply(cons.rest);
+  }
+
+  // applies ormap to given list
+  public Boolean apply(IList<T> list) {
+    return list.accept(this);
+  }
+}
+
+//examples of instructors, students, and courses
+class ExamplesRegistrar {
+  Instructor instr1;
+  Instructor instr2;
+  Student st1;
+  Student st2;
+  Student st3;
+  Student st4;
+  Student st5;
+  Course c1;
+  Course c2;
+  Course c3;
+  Course c4;
+
+  // initializes data examples to default values
+  void initialize() {
+    this.instr1 = new Instructor("A");
+    this.instr2 = new Instructor("B");
+    this.st1 = new Student("Joe", 1);
+    this.st2 = new Student("Bill", 2);
+    this.st3 = new Student("Mark", 3);
+    this.st4 = new Student("Nancy", 4);
+    this.st5 = new Student("Mary", 5);
+    this.c1 = new Course("Physics", this.instr1, new MtList<Student>());
+    this.c2 = new Course("Discrete", this.instr2, new MtList<Student>());
+    this.c3 = new Course("English", this.instr1, new MtList<Student>());
+    this.c4 = new Course("Fundies", this.instr1, new MtList<Student>());
+  }
+
+  void testEnroll(Tester t) {
+    initialize();
+    this.st1.enroll(this.c1);
+    t.checkExpect(this.c1,
+        new Course("Physics", this.instr1, new ConsList<Student>(this.st1, new MtList<Student>())));
+    t.checkExpect(this.st1,
+        new Student("Joe", 1, new ConsList<Course>(this.c1, new MtList<Course>())));
+    initialize();
+  }
+
+  void testClassmates(Tester t) {
+    initialize();
+    this.st1.enroll(this.c1);
+    this.st2.enroll(this.c1);
+    this.st3.enroll(this.c2);
+    t.checkExpect(this.st1.classmates(this.st2), true);
+    t.checkExpect(this.st2.classmates(this.st1), true);
+    t.checkExpect(this.st3.classmates(this.st2), false);
+    initialize();
+  }
+
+  void testDejavu(Tester t) {
+    initialize();
+    this.st5.enroll(this.c2);
+    this.st5.enroll(this.c3);
+    this.st5.enroll(this.c4);
+    this.st4.enroll(this.c1);
+    t.checkExpect(this.instr1.dejavu(this.st5), true);
+    t.checkExpect(this.instr2.dejavu(this.st5), false);
+    t.checkExpect(this.instr1.dejavu(this.st4), false);
+    initialize();
+  }
+}
