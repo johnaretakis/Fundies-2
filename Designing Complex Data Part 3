@@ -1,0 +1,102 @@
+// An IResource represents a resource a player can have
+interface IResource {
+}
+
+// A Denial represents a denial subject and believabilty
+
+class Denial implements IResource {
+  
+  String subject;
+  int believability;
+  
+  // Constructor
+  Denial(String subject, int believability) {
+    this.subject = subject;
+    this.believability = believability;
+  }
+ 
+}
+
+// A Bribe represents how much it takes to bribe a specific target
+
+class Bribe implements IResource {
+  
+  String target;
+  int value;
+  
+  //Constructor
+  Bribe(String target, int value) {
+    this.target = target;
+    this.value = value;
+  }
+  
+}
+
+// An Apology represents an excuse and whether or not its reusable
+
+class Apology implements IResource {
+  
+  String excuse;
+  boolean reusable;
+  
+  //Constructor
+  Apology(String excuse, boolean reusable) {
+    this.excuse = excuse;
+    this.reusable = reusable;
+  }
+
+}
+
+// An IAction represents an action the player can take
+
+interface IAction {
+  
+}
+
+// A Purchase represents the cost and name of an item
+
+class Purchase implements IAction {
+  
+  double cost;
+  String item;
+  
+  //Constructor
+  Purchase(double cost, String item) {
+    this.cost = cost;
+    this.item = item;
+  }
+  
+}
+
+// A Swap represents the swap of a consumed resource for a received resource
+
+class Swap implements IAction {
+  
+  IResource consumed;
+  IResource received;
+  
+  //Constructor
+  Swap(IResource consumed, IResource received) {
+    this.consumed = consumed;
+    this.received = received;
+  }
+  
+}
+
+class ExamplesGame {
+  
+  IResource iDidntKnow = new Denial("knowledge", 51);
+  IResource iForgot = new Denial("IQ", 42);
+  
+  IResource witness = new Bribe("innocent witness", 49);
+  IResource cop = new Bribe("on duty officer", 21);
+  
+  IResource iWontDoItAgain = new Apology("I won't do it again", false);
+  IResource imSorry = new Apology("I'm sorry", true);
+ 
+  IAction purchase1 = new Purchase(56, "water");
+  IAction purchase2 = new Purchase(78, "sword");
+  
+  IAction swap1 = new Swap(iDidntKnow, iWontDoItAgain);
+  IAction swap2 = new Swap(witness, cop);
+}
