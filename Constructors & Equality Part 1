@@ -1,0 +1,219 @@
+import tester.Tester;
+
+//represents a perfect bagel recipe
+class BagelRecipe {
+
+  double flour;
+  double water;
+  double yeast;
+  double salt;
+  double malt;
+
+  // values are measured in weights
+  BagelRecipe(double flour, double water, double yeast, double salt, double malt) {
+   
+    // Makes sure all values are positive
+    new Utils().positiveOrError(flour, "Weight of flour");
+    new Utils().positiveOrError(water, "Weight of water");
+    new Utils().positiveOrError(yeast, "Weight of yeast");
+    new Utils().positiveOrError(salt, "Weight of salt");
+    new Utils().positiveOrError(malt, "Weight of malt");
+    
+    // Makes sure the ratios between ingredients are correct
+    new Utils().checkDoubleEqualOrError(flour, water, 0.001,
+        "Weights of flour and water are not equal.");
+    new Utils().checkDoubleEqualOrError(yeast, malt, 0.001,
+        "Weights of yeast and malt are not equal.");
+    new Utils().checkDoubleEqualOrError((yeast + salt), (flour / 20.0), 0.001,
+        "The total weights of salt and yeast, are not equal to the 1/20th the weight of flour.");
+
+    this.flour = flour;
+    this.water = water;
+    this.malt = malt;
+    this.salt = salt;
+    this.yeast = yeast;
+  }
+
+  // Creates a perfect BagelRecipe given the weight of flour and weight of yeast
+  BagelRecipe(double flour, double yeast) {
+    this(flour, flour, yeast, (flour / 20) - yeast, yeast);
+  }
+
+  // values are measured in volumes instead of weights
+  BagelRecipe(double flour, double yeast, double salt) {
+    this(flour * 4.25, flour * 4.25, (yeast / 48) * 5, (salt / 48) * 10, (yeast / 48) * 5);
+  }
+
+  /*
+   * TEMPLATE:
+   * 
+   * Fields:
+   * ...this.flour... -double
+   * ...this.water... -double
+   * ...this.yeast... -double
+   * ...this.salt... -double
+   * ...this.malt... -double
+   * 
+   * Methods:
+   * ...sameRecipe(BagelRecipe)... -boolean
+   */
+  boolean sameRecipe(BagelRecipe other) {
+    return (new Utils().checkDoubleEqual(this.flour, other.flour, 0.001))
+        && (new Utils().checkDoubleEqual(this.water, other.water, 0.001))
+        && (new Utils().checkDoubleEqual(this.yeast, other.yeast, 0.001))
+        && (new Utils().checkDoubleEqual(this.salt, other.salt, 0.001))
+        && (new Utils().checkDoubleEqual(this.malt, other.malt, 0.001));
+  }
+}
+
+//Utility class
+class Utils {
+
+  /*
+   * TEMPLATE:
+   * Methods:
+   * ...this.checkDoubleEqual(double, double, double)... - boolean
+   * ...this.checkDoubleEqualOrError(double, double, double, String)... - boolean
+   * ...this.positiveOrError(double, String)... - boolean
+   */
+
+  // Checks if num1 and num2 are equal
+  boolean checkDoubleEqual(double num1, double num2, double tolerance) {
+    return (Math.abs(num1 - num2) < tolerance);
+  }
+
+  // Checks if num1 and num2 are equal (within the tolerance), and throws
+  // an error if false
+  boolean checkDoubleEqualOrError(double num1, double num2, double tolerance, String errorMsg) {
+    if ((Math.abs(num1 - num2) < tolerance)) {
+      return true;
+    }
+    else {
+      throw new IllegalArgumentException(errorMsg);
+    }
+  }
+
+  // Returns true if a number is positive, throws an error otherwise
+  boolean positiveOrError(double num, String varName) {
+    if (0 < num) {
+      return true;
+    }
+    else {
+      throw new IllegalArgumentException(varName + " is not positive.");
+    }
+  }
+}
+
+class ExamplesBagels {
+  BagelRecipe bagel1 = new BagelRecipe(8, 8, .2, .2, .2);
+
+  BagelRecipe bagel2 = new BagelRecipe(12, .3);
+
+  BagelRecipe bagel3 = new BagelRecipe(24, 10, 19.48);
+
+  BagelRecipe bagel4 = new BagelRecipe(8, 8, .2, .2, .2);
+
+  BagelRecipe bagel5 = new BagelRecipe(8, 8, .2, .2, .2);
+
+  // tests the constructor to make sure it creates the perfect bagel and throws
+  // appropriate error when fields are invalid
+  boolean testBagelRecipe(Tester t) {
+    return t.checkExpect(bagel1, new BagelRecipe(8, 8, .2, .2, .2))
+        && t.checkExpect(bagel2, new BagelRecipe(12, 12, .3, .3, .3))
+        && t.checkInexact(bagel3,
+            new BagelRecipe(102, 102, 25 / 24., 487 / 120., 25 / 24.), .0001)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weight of flour is not positive."), "BagelRecipe", -2.,
+            2., 2., 2., 2.)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weight of flour is not positive."), "BagelRecipe", 0., 2.,
+            2., 2., 2.)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weight of water is not positive."), "BagelRecipe", 2.,
+            -2., 2., 2., 2.)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weight of water is not positive."), "BagelRecipe", 2., 0.,
+            2., 2., 2.)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weight of yeast is not positive."), "BagelRecipe", 2., 2.,
+            -2., 2., 2.)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weight of yeast is not positive."), "BagelRecipe", 2., 2.,
+            0., 2., 2.)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weight of salt is not positive."), "BagelRecipe", 2., 2.,
+            2., -2., 2.)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weight of salt is not positive."), "BagelRecipe", 2., 2.,
+            2., 0., 2.)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weight of malt is not positive."), "BagelRecipe", 2., 2.,
+            2., 2., -2.)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weight of malt is not positive."), "BagelRecipe", 2., 2.,
+            2., 2., 0.)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weights of flour and water are not equal."),
+            "BagelRecipe", 20.0, 12.0, 4.0, 6.0, 13.0)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Weights of yeast and malt are not equal."), "BagelRecipe",
+            20.0, 20.0, 4.0, 6.0, 13.0)
+        && t.checkConstructorException(
+            new IllegalArgumentException(
+                "The total weights of salt and yeast, are not equal to the 1/20th"
+                    + " the weight of flour."),
+            "BagelRecipe", 20.0, 20.0, 4.0, 4.0, 4.0);
+  }
+
+  // tests the sameRecipe method
+  boolean testSameRecipe(Tester t) {
+
+    return t.checkExpect((bagel1.sameRecipe(bagel1)), true)
+        && t.checkExpect((bagel1.sameRecipe(new BagelRecipe(8, 8, .2, .2, .2))), true)
+        && t.checkExpect((bagel1.sameRecipe(bagel2)), false)
+        && t.checkExpect((bagel2.sameRecipe(bagel2)), true)
+        && t.checkExpect((bagel2.sameRecipe(new BagelRecipe(12, .3))), true)
+        && t.checkExpect((bagel2.sameRecipe(bagel3)), false)
+        && t.checkExpect((bagel3.sameRecipe(bagel3)), true)
+        && t.checkExpect((bagel3.sameRecipe(new BagelRecipe(24, 10, 19.48))), true)
+        && t.checkExpect((bagel3.sameRecipe(bagel4)), false)
+        && t.checkExpect((bagel1.sameRecipe(bagel4)), true)
+        && t.checkExpect((bagel4.sameRecipe(bagel1)), true)
+        && t.checkExpect((bagel4.sameRecipe(bagel5)), true)
+        && t.checkExpect((bagel5.sameRecipe(bagel4)), true)
+        && t.checkExpect((bagel1.sameRecipe(bagel5)), true)
+        && t.checkExpect((bagel5.sameRecipe(bagel1)), true);
+  }
+
+  // tests the checkDoubleEqual method
+  boolean testCheckDoubleEqual(Tester t) {
+    return t.checkExpect(new Utils().checkDoubleEqual(1.5, 1.5, 0.000001), true)
+        && t.checkExpect(new Utils().checkDoubleEqual(1.501, 1.5, 0.01), true)
+        && t.checkExpect(new Utils().checkDoubleEqual(15, 16, 10), true)
+        && t.checkExpect(new Utils().checkDoubleEqual(1.501, 1.5, 0.0001), false)
+        && t.checkExpect(new Utils().checkDoubleEqual(1.501, 1.5, 0.01), true)
+        && t.checkExpect(new Utils().checkDoubleEqual(1.501, 1.5, 0.001), true)
+        && t.checkExpect(new Utils().checkDoubleEqual(15., 16., 0.01), false);
+  }
+
+  // tests the checkDoubleEqualOrError method
+  boolean testCheckDoubleEqualOrError(Tester t) {
+    return t.checkExpect(new Utils().checkDoubleEqualOrError(1.5, 1.5, 0.000001, "error"), true)
+        && t.checkExpect(new Utils().checkDoubleEqualOrError(1.501, 1.5, 0.01, "error"), true)
+        && t.checkException(new IllegalArgumentException("error"), new Utils(),
+            "checkDoubleEqualOrError", 1.501, 1.5, 0.0001, "error")
+        && t.checkExpect(new Utils().checkDoubleEqualOrError(15, 16, 10, "error"), true)
+        && t.checkException(new IllegalArgumentException("error"), new Utils(),
+            "checkDoubleEqualOrError", 15., 16., 0.01, "error");
+  }
+
+  // tests the positiveOrError method
+  boolean testPositiveOrError(Tester t) {
+    return t.checkException(new IllegalArgumentException("x is not positive."), new Utils(),
+        "positiveOrError", 0.0, "x")
+        && t.checkException(new IllegalArgumentException("x is not positive."), new Utils(),
+            "positiveOrError", -1.2, "x")
+        && t.checkException(new IllegalArgumentException("x is not positive."), new Utils(),
+            "positiveOrError", -2.0, "x");
+  }
+}
