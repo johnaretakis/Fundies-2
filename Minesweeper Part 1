@@ -1,0 +1,371 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
+
+import tester.*;
+import javalib.impworld.*;
+import javalib.worldcanvas.WorldCanvas;
+
+import java.awt.Color;
+import javalib.worldimages.*;
+
+class Minesweeper {
+  int gridXSize;
+  int gridYSize;
+  int numMines;
+  Random rand;
+  ArrayList<ArrayList<Cell>> grid;
+
+  Minesweeper(int x, int y, int numMines, Random rand) {
+    this.gridXSize = x;
+    this.gridYSize = y;
+    this.numMines = numMines;
+    this.rand = rand;
+    this.initGrid();
+  }
+
+  Minesweeper(int x, int y, int numMines) {
+    this(x, y, numMines, new Random());
+  }
+
+  Minesweeper(Random rand) {
+    this(9, 9, 10, rand);
+  }
+
+  Minesweeper() {
+    this(new Random());
+  }
+
+  // makes all cells for the grid
+  // EFFECT: links all cells so they are neighbors of nearby cells, and vice versa
+  void initGrid() {
+    Cell left;
+    Cell top;
+    Cell topLeft;
+    Cell topRight;
+    this.grid = new ArrayList<ArrayList<Cell>>();
+    for (int y = 0; y < this.gridYSize; y++) {
+      this.grid.add(new ArrayList<Cell>());
+      for (int x = 0; x < this.gridXSize; x++) {
+        if (x != 0) {
+          left = this.grid.get(y).get(x - 1);
+        }
+        else {
+          left = null;
+        }
+
+        if (y != 0) {
+          top = this.grid.get(y - 1).get(x);
+        }
+        else {
+          top = null;
+        }
+
+        if (y != 0 && x != 0) {
+          topLeft = this.grid.get(y - 1).get(x - 1);
+        }
+        else {
+          topLeft = null;
+        }
+
+        if (y != 0 && x != this.gridXSize - 1) {
+          topRight = this.grid.get(y - 1).get(x + 1);
+        }
+        else {
+          topRight = null;
+        }
+
+        ArrayList<Cell> neighbors = new ArrayList<Cell>(
+            Arrays.asList(top, topRight, null, null, null, null, left, topLeft));
+        this.grid.get(y).add(new Cell(neighbors));
+      }
+    }
+    this.placeMines();
+  }
+
+  // randomly places mines on the grid
+  // EFFECT: changes the preset number of cells into mines
+  void placeMines() {
+    ArrayList<Integer> mineNumbers = new ArrayList<Integer>();
+    for (int i = 0; i < this.gridXSize * this.gridYSize; i++) {
+      mineNumbers.add(i);
+    }
+    for (int i = 0; i < this.numMines; i++) {
+      int num = mineNumbers.remove(rand.nextInt(mineNumbers.size()));
+      int y = num / this.gridXSize;
+      int x = num % this.gridXSize;
+      System.out
+          .println("Making cell (" + Integer.toString(x) + ", " + Integer.toString(y) + ") a mine");
+      this.grid.get(y).get(x).makeMine();
+    }
+  }
+
+  // draws grid
+  WorldScene makeScene() {
+    WorldScene scene = new WorldScene(30 * this.gridXSize, 30 * this.gridYSize);
+    for (int y = 0; y < this.gridYSize; y++) {
+      for (int x = 0; x < this.gridXSize; x++) {
+        scene.placeImageXY(this.grid.get(y).get(x).drawCell(), x * 30 + 15, y * 30 + 15);
+      }
+    }
+    return scene;
+  }
+
+  // draws the grid with all mines revealed
+  // EFFECT: makes all cells that are mines revealed
+  WorldScene revealAllMines() {
+    for (int y = 0; y < this.gridYSize; y++) {
+      for (int x = 0; x < this.gridXSize; x++) {
+        Cell curr = this.grid.get(y).get(x);
+        if (curr.isMine()) {
+          curr.reveal();
+        }
+      }
+    }
+    return this.makeScene();
+  }
+}
+
+class Cell {
+  ArrayList<Cell> neighbors;
+  boolean isMine;
+  boolean isRevealed;
+  boolean isFlagged;
+
+  Cell(ArrayList<Cell> neighbors, boolean isMine, boolean isRevealed, boolean isFlagged) {
+    this.neighbors = neighbors;
+    for (int i = 0; i < 8; i++) {
+      if (neighbors.get(i) != null) {
+        neighbors.get(i).neighbors.set(this.correspondingIndex(i), this);
+      }
+    }
+    this.isFlagged = isFlagged;
+    this.isRevealed = isRevealed;
+    this.isMine = isMine;
+  }
+
+  Cell(ArrayList<Cell> neighbors) {
+    this(neighbors, false, false, false);
+  }
+
+  Cell() {
+    this(new ArrayList<Cell>(Arrays.asList(null, null, null, null, null, null, null, null)));
+  }
+
+  Cell(boolean isMine, boolean isRevealed, boolean isFlagged) {
+    this();
+    this.isMine = isMine;
+    this.isRevealed = isRevealed;
+    this.isFlagged = isFlagged;
+  }
+
+  // gets index of opposite cell direction (e.g. index for top (0) becomes index
+  // for bottom (4)
+  int correspondingIndex(int j) {
+    int ans = (j - 4) % 8;
+    if (ans < 0) {
+      ans += 8;
+    }
+    return ans;
+  }
+
+  // EFFECT: makes this cell a mine
+  void makeMine() {
+    this.isMine = true;
+  }
+
+  // EFFECT: reveal this cell
+  void reveal() {
+    this.isRevealed = true;
+  }
+
+  // EFFECT: toggles flag for this mine if it is not yet revealed
+  void toggleFlag() {
+    if (!this.isRevealed) {
+      this.isFlagged = !this.isFlagged;
+    }
+
+  }
+
+  // returns true if this cell is a mine
+  boolean isMine() {
+    return this.isMine;
+  }
+
+  // returns number of neighboring cells that are mines
+  int neighborMines() {
+    int result = 0;
+    for (int i = 0; i < 8; i++) {
+      if (this.neighbors.get(i) != null && this.neighbors.get(i).isMine()) {
+        result++;
+      }
+    }
+    return result;
+  }
+
+  // draws this cell
+  WorldImage drawCell() {
+    WorldImage outline = new RectangleImage(30, 30, OutlineMode.OUTLINE, Color.BLACK);
+    Color fillColor;
+    if (this.isRevealed) {
+      fillColor = Color.DARK_GRAY;
+    }
+    else {
+      fillColor = Color.lightGray;
+    }
+    WorldImage fill = new RectangleImage(30, 30, OutlineMode.SOLID, fillColor);
+    WorldImage cellImg = new OverlayImage(outline, fill);
+    if (this.isFlagged) {
+      WorldImage flag = new EquilateralTriangleImage(10, OutlineMode.SOLID, Color.yellow);
+      cellImg = new OverlayImage(flag, cellImg);
+    }
+    if (this.isRevealed) {
+      if (this.isMine) {
+        WorldImage circle = new CircleImage(10, OutlineMode.SOLID, Color.RED);
+        cellImg = new OverlayImage(circle, cellImg);
+      }
+      else {
+        cellImg = new OverlayImage(this.drawNumber(), cellImg);
+      }
+    }
+    return cellImg;
+  }
+
+  // draws the number of neighboring mines with good colors
+  WorldImage drawNumber() {
+    int textSize = 24;
+    ArrayList<Color> colors = new ArrayList<Color>(Arrays.asList(Color.black, Color.blue,
+        Color.green, Color.red, Color.cyan, Color.yellow, Color.pink, Color.orange, Color.magenta));
+    int num = this.neighborMines();
+    if (num == 0) {
+      return new TextImage("", textSize, colors.get(num));
+    }
+    else {
+      return new TextImage(Integer.toString(num), textSize, colors.get(num));
+    }
+  }
+}
+
+class ExamplesMinesweeper {
+  Random rand = new Random(10);
+  Minesweeper game = new Minesweeper(rand);
+
+  void testMakeScene(Tester chester) {
+    WorldCanvas c = new WorldCanvas(270, 270);
+    c.drawScene(game.makeScene());
+    c.show();
+  }
+
+  void testRevealAllMines(Tester t) {
+    WorldCanvas c = new WorldCanvas(270, 270);
+    c.drawScene(game.revealAllMines());
+    c.show();
+  }
+
+  void testMakeMine(Tester t) {
+    Cell c = new Cell();
+    c.makeMine();
+    t.checkExpect(c, new Cell(true, false, false));
+  }
+
+  void testReveal(Tester t) {
+    Cell c = new Cell();
+    c.reveal();
+    t.checkExpect(c, new Cell(false, true, false));
+  }
+
+  void testToggleFlag(Tester t) {
+    Cell c = new Cell();
+    c.toggleFlag();
+    t.checkExpect(c, new Cell(false, false, true));
+    c.toggleFlag();
+    t.checkExpect(c, new Cell(false, false, false));
+  }
+
+  void testIsMine(Tester t) {
+    Cell c1 = new Cell(false, false, false);
+    Cell c2 = new Cell(true, false, false);
+    t.checkExpect(c1.isMine(), false);
+    t.checkExpect(c2.isMine(), true);
+    c1.makeMine();
+    t.checkExpect(c1.isMine(), true);
+  }
+
+  void testNeighborMines(Tester t) {
+    Cell c1 = new Cell();
+    t.checkExpect(c1.neighborMines(), 0);
+    ArrayList<Cell> neighbors = new ArrayList<Cell>();
+    for (int i = 0; i < 8; i++) {
+      neighbors.add(new Cell());
+    }
+    Cell c2 = new Cell(neighbors);
+    t.checkExpect(c2.neighborMines(), 0);
+    neighbors.get(2).makeMine();
+    neighbors.get(5).makeMine();
+    t.checkExpect(c2.neighborMines(), 2);
+  }
+
+  void testDrawCell(Tester t) {
+    ArrayList<Cell> neighbors = new ArrayList<Cell>();
+    for (int i = 0; i < 8; i++) {
+      neighbors.add(new Cell());
+    }
+    Cell c = new Cell(neighbors);
+    t.checkExpect(c.drawCell(),
+        new OverlayImage(new RectangleImage(30, 30, OutlineMode.OUTLINE, Color.BLACK),
+            new RectangleImage(30, 30, OutlineMode.SOLID, Color.LIGHT_GRAY)));
+    c.toggleFlag();
+    t.checkExpect(c.drawCell(),
+        new OverlayImage(new EquilateralTriangleImage(10, OutlineMode.SOLID, Color.yellow),
+            new OverlayImage(new RectangleImage(30, 30, OutlineMode.OUTLINE, Color.BLACK),
+                new RectangleImage(30, 30, OutlineMode.SOLID, Color.LIGHT_GRAY))));
+    c.toggleFlag();
+    c.makeMine();
+    t.checkExpect(c.drawCell(),
+        new OverlayImage(new RectangleImage(30, 30, OutlineMode.OUTLINE, Color.BLACK),
+            new RectangleImage(30, 30, OutlineMode.SOLID, Color.LIGHT_GRAY)));
+    c.reveal();
+    t.checkExpect(c.drawCell(),
+        new OverlayImage(new CircleImage(10, OutlineMode.SOLID, Color.RED),
+            new OverlayImage(new RectangleImage(30, 30, OutlineMode.OUTLINE, Color.BLACK),
+                new RectangleImage(30, 30, OutlineMode.SOLID, Color.DARK_GRAY))));
+    c = new Cell(neighbors);
+    c.reveal();
+    t.checkExpect(c.drawCell(),
+        new OverlayImage(c.drawNumber(),
+            new OverlayImage(new RectangleImage(30, 30, OutlineMode.OUTLINE, Color.BLACK),
+                new RectangleImage(30, 30, OutlineMode.SOLID, Color.DARK_GRAY))));
+    neighbors.get(3).makeMine();
+    t.checkExpect(c.drawCell(),
+        new OverlayImage(c.drawNumber(),
+            new OverlayImage(new RectangleImage(30, 30, OutlineMode.OUTLINE, Color.BLACK),
+                new RectangleImage(30, 30, OutlineMode.SOLID, Color.DARK_GRAY))));
+  }
+
+  void testDrawNumber(Tester t) {
+    ArrayList<Color> colors = new ArrayList<Color>(Arrays.asList(Color.black, Color.blue,
+        Color.green, Color.red, Color.cyan, Color.yellow, Color.pink, Color.orange, Color.magenta));
+    ArrayList<Cell> neighbors = new ArrayList<Cell>();
+    for (int i = 0; i < 8; i++) {
+      neighbors.add(new Cell());
+    }
+    Cell c = new Cell(neighbors);
+    t.checkExpect(c.drawNumber(), new TextImage("", 24, Color.black));
+    for (int i = 0; i < 8; i++) {
+      neighbors.get(i).makeMine();
+      t.checkExpect(c.drawNumber(), new TextImage(Integer.toString(i + 1), 24, colors.get(i + 1)));
+    }
+  }
+
+  void testCorrespondingIndex(Tester t) {
+    Cell c = new Cell();
+    t.checkExpect(c.correspondingIndex(0), 4);
+    t.checkExpect(c.correspondingIndex(1), 5);
+    t.checkExpect(c.correspondingIndex(2), 6);
+    t.checkExpect(c.correspondingIndex(3), 7);
+    t.checkExpect(c.correspondingIndex(4), 0);
+    t.checkExpect(c.correspondingIndex(5), 1);
+    t.checkExpect(c.correspondingIndex(6), 2);
+    t.checkExpect(c.correspondingIndex(7), 3);
+  }
+}
