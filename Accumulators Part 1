@@ -1,0 +1,492 @@
+import tester.Tester;
+
+// Represents two drivers going on a road trip
+class RoadTrip {
+
+  String driver1;
+  String driver2;
+  ILoDirection directions;
+
+  RoadTrip(String driver1, String driver2, ILoDirection directions) {
+    this.driver1 = driver1;
+    this.driver2 = driver2;
+    this.directions = directions;
+  }
+
+  /*
+   * TEMPLATE
+   * Fields:
+   * ... this.driver1 ... --String
+   * ... this.driver2 ... --String
+   * ... this.directions ... --String
+   * Methods:
+   * ... this.splitUpTrip(int) ... --RoadTripChunk
+   */
+
+  // Splits up a RoadTrip into ILoRoadTripChunks switching drivers every int miles
+  ILoRoadTripChunk splitUpTrip(int miles) {
+    return this.directions.splitUpTripHelper(driver1, driver2, miles, miles)
+        .splitIntoChunks(driver1, driver2);
+  }
+
+}
+
+//Represents a list of directions
+interface ILoDirection {
+
+  /**
+   * 
+   * @param currentDriver - the current driver
+   * @param otherDriver   - the other driver (to alternate with)
+   * @param milesLeft     - the amount of miles left that currentDriver has to drive
+   * @param milesInterval - the amount of miles each driver drives before switching
+   * @return - an ILoDirection that splits up directions according to the interval and includes
+   *         directions telling drivers to switch
+   */
+  ILoDirection splitUpTripHelper(String currentDriver, String otherDriver, int milesLeft,
+      int milesInterval);
+
+  // Creates a Direction that tells drivers to switch and switches the currentDriver with
+  // otherDriver, and adds it onto the remaining ILoDirection
+  ILoDirection switchDriver(String currentDriver, String otherDriver, int milesInterval);
+
+  // Splits the ILoDirection returned by splitUpTripHelper into and ILoRoadTripChunk with each chunk
+  // containing directions for each (alternating) driver
+  ILoRoadTripChunk splitIntoChunks(String currentDriver, String otherDriver);
+
+  // Returns all of the Directions (in a list) in this ILoDirection until (and including)
+  // the next "switch" Direction
+  ILoDirection directionsUntilSwitch();
+
+  // Returns all of the Directions (in a list) in this ILoDirection after the next "switch"
+  // direction (excluding the "switch" direction itself)
+  ILoDirection directionsAfterSwitch();
+
+}
+
+//Represents an empty list of directions
+class MtLoDirection implements ILoDirection {
+
+  MtLoDirection() {
+  }
+
+  /*
+   * TEMPLATE:
+   * Methods:
+   * ...this.splitUpTripHelper(String, String, int, int)... - ILoDirection
+   * ...this.switchDriver(String, String, int)... - ILoDirection
+   * ...this.splitIntoChunks(String, String)... - ILoRoadTripChunk
+   * ...this.directionsUntilSwitch()... - ILoDirection
+   * ...this.directionsAfterSwitch()... - ILoDirection
+   */
+
+  /**
+   * 
+   * @param currentDriver - the current driver
+   * @param otherDriver   - the other driver (to alternate with)
+   * @param milesLeft     - the amount of miles left that currentDriver has to drive
+   * @param milesInterval - the amount of miles each driver drives before switching
+   * @return - an ILoDirection that splits up directions according to the interval and includes
+   *         directions telling drivers to switch (since there are no Directions, returns an empty
+   *         list)
+   */
+  public ILoDirection splitUpTripHelper(String currentDriver, String otherDriver, int milesLeft,
+      int milesInterval) {
+    return this;
+  }
+
+  // Creates a Direction that tells drivers to switch and switches the currentDriver with
+  // otherDriver (since there are no Directions, returns an empty list)
+  public ILoDirection switchDriver(String currentDriver, String otherDriver, int milesInterval) {
+    return this;
+  }
+
+  // Splits the ILoDirection returned by splitUpTripHelper into and ILoRoadTripChunk with each chunk
+  // containing directions for each (alternating) driver (since there are no directions to put into
+  // the RoadTripChunk, returns an mtLoRoadTripChunk)
+  public ILoRoadTripChunk splitIntoChunks(String currentDriver, String otherDriver) {
+    return new MtLoRoadTripChunk();
+  }
+
+  // Returns all of the Directions (in a list) in this ILoDirection until (and including)
+  // the next "switch" Direction (since there are no directions in this list, there is no next
+  // "switch" direction, so it returns empty
+  public ILoDirection directionsUntilSwitch() {
+    return this;
+  }
+
+  // Returns all of the Directions (in a list) in this ILoDirection after the next "switch"
+  // direction (excluding the "switch" direction itself) (since there are no directions in this
+  // list, returns empty)
+  public ILoDirection directionsAfterSwitch() {
+    return this;
+  }
+}
+
+//Represents a non-empty list of directions
+class ConsLoDirection implements ILoDirection {
+  Direction first;
+  ILoDirection rest;
+
+  ConsLoDirection(Direction first, ILoDirection rest) {
+    this.first = first;
+    this.rest = rest;
+  }
+  /*
+   * TEMPLATE
+   * Fields:
+   * ... this.first ... --Direction
+   * ... this.rest ... -ILoDirection
+   * Methods:
+   * ...this.splitUpTripHelper(String, String, int, int)... - ILoDirection
+   * ...this.switchDriver(String, String, int)... - ILoDirection
+   * ...this.splitIntoChunks(String, String)... - ILoRoadTripChunk
+   * ...this.directionsUntilSwitch()... - ILoDirection
+   * ...this.directionsAfterSwitch()... - ILoDirection
+   * Methods of Fields:
+   * ...this.first.milesDif(int)... - int
+   * ...this.first.adjustMiles(int)... - Direction
+   * ...this.isSwitch()... - Boolean
+   * 
+   * ...this.rest.splitUpTripHelper(String, String, int, int)... - ILoDirection
+   * ...this.rest.switchDriver(String, String, int)... - ILoDirection
+   * ...this.rest.splitIntoChunks(String, String)... - ILoRoadTripChunk
+   * ...this.rest.directionsUntilSwitch()... - ILoDirection
+   * ...this.rest.directionsAfterSwitch()... - ILoDirection
+   * 
+   */
+
+  /**
+   * 
+   * @param currentDriver - the current driver
+   * @param otherDriver   - the other driver (to alternate with)
+   * @param milesLeft     - the amount of miles left that currentDriver has to drive
+   * @param milesInterval - the amount of miles each driver drives before switching
+   * @return - an ILoDirection that splits up directions according to the interval and includes
+   *         directions telling drivers to switch
+   */
+  public ILoDirection splitUpTripHelper(String currentDriver, String otherDriver, int milesLeft,
+      int milesInterval) {
+    int difference = this.first.milesDif(milesLeft);
+    if (difference > 0) {
+      return new ConsLoDirection(this.first,
+          this.rest.splitUpTripHelper(currentDriver, otherDriver, difference, milesInterval));
+    }
+    else if (difference == 0) {
+      return new ConsLoDirection(this.first,
+          this.rest.switchDriver(currentDriver, otherDriver, milesInterval));
+    }
+    else {
+      return new ConsLoDirection(new Direction("Switch with " + otherDriver, milesLeft),
+          new ConsLoDirection(this.first.adjustMiles(-difference), this.rest).splitUpTripHelper(
+              otherDriver, currentDriver, milesInterval, milesInterval));
+    }
+  }
+
+  // Creates a Direction that tells drivers to switch and switches the currentDriver with
+  // otherDriver and adds it to the remaining ILoDirection
+  public ILoDirection switchDriver(String currentDriver, String otherDriver, int milesInterval) {
+    return new ConsLoDirection(new Direction("Switch with " + otherDriver, 0),
+        this.splitUpTripHelper(otherDriver, currentDriver, milesInterval, milesInterval));
+  }
+
+  // Splits the ILoDirection returned by splitUpTripHelper into and ILoRoadTripChunk with each chunk
+  // containing directions for each (alternating) driver
+  public ILoRoadTripChunk splitIntoChunks(String currentDriver, String otherDriver) {
+    return new ConsLoRoadTripChunk(new RoadTripChunk(currentDriver, this.directionsUntilSwitch()),
+        this.directionsAfterSwitch().splitIntoChunks(otherDriver, currentDriver));
+  }
+
+  // Returns all of the Directions (in a list) in this ILoDirection until (and including)
+  // the next "switch" Direction
+  public ILoDirection directionsUntilSwitch() {
+    if (this.first.isSwitch()) {
+      return new ConsLoDirection(this.first, new MtLoDirection());
+    }
+    else {
+      return new ConsLoDirection(this.first, this.rest.directionsUntilSwitch());
+    }
+  }
+
+  // Returns all of the Directions (in a list) in this ILoDirection after the next "switch"
+  // direction (excluding the "switch" direction itself)
+  public ILoDirection directionsAfterSwitch() {
+    if (this.first.isSwitch()) {
+      return this.rest;
+    }
+    else {
+      return this.rest.directionsAfterSwitch();
+    }
+  }
+}
+
+// Represents road directions and miles between them
+class Direction {
+  String description;
+  int miles;
+
+  Direction(String description, int miles) {
+    this.description = description;
+    this.miles = miles;
+  }
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.description... - String
+   * ...this.miles... - int
+   * Methods:
+   * ...this.milesDif(int) - int
+   * ...this.adjustMiles(int) - int
+   * ...this.isSwitch()... - boolean
+   */
+
+  // Returns the difference between milesLeft and this.miles
+  int milesDif(int milesLeft) {
+    return milesLeft - this.miles;
+  }
+
+  // Creates a new Direction with the same description and miles set to newValue
+  Direction adjustMiles(int newValue) {
+    return new Direction(this.description, newValue);
+  }
+
+  // Does this Direction indicate a change (switch) in driver?
+  boolean isSwitch() {
+    return this.description.contains("Switch with");
+  }
+}
+
+// Represents a list of RoadTripChunk
+interface ILoRoadTripChunk {
+}
+
+// Represents an empty list of RoadTripChunks
+class MtLoRoadTripChunk implements ILoRoadTripChunk {
+
+  MtLoRoadTripChunk() {
+  }
+}
+
+// Represents a non-empty list of RoadTripChunks
+class ConsLoRoadTripChunk implements ILoRoadTripChunk {
+
+  RoadTripChunk first;
+  ILoRoadTripChunk rest;
+
+  ConsLoRoadTripChunk(RoadTripChunk first, ILoRoadTripChunk rest) {
+    this.first = first;
+    this.rest = rest;
+  }
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.first... - RoadTripChunk
+   * ...this.rest... - ILoRoadTripChunk
+   */
+}
+
+// Represents how much each driver has to drive before switching drivers
+class RoadTripChunk {
+  String driver;
+  ILoDirection directions;
+
+  RoadTripChunk(String driver, ILoDirection directions) {
+    this.driver = driver;
+    this.directions = directions;
+  }
+  /*
+   * TEMPLATE
+   * Fields:
+   * ... this.driver ... --String
+   * ... this.directions ... --ILoDirection
+   */
+}
+
+class ExamplesRoadTrip {
+
+  ILoDirection mtDir = new MtLoDirection();
+  ILoRoadTripChunk mtRTC = new MtLoRoadTripChunk();
+  RoadTrip mtRoadTrip = new RoadTrip("Person 1", "Person 2", this.mtDir);
+
+  Direction alb = new Direction("Make a left at Alberquerque", 13);
+  Direction fork1 = new Direction("Make a right at the fork", 2);
+  Direction fork2 = new Direction("Make a left at the next fork", 3);
+  Direction overpass = new Direction("Take the overpass", 45);
+  Direction dest = new Direction("Destination on left", 12);
+  ILoDirection directions1 = new ConsLoDirection(alb, new ConsLoDirection(fork1,
+      new ConsLoDirection(fork2, new ConsLoDirection(overpass,
+          new ConsLoDirection(dest, new MtLoDirection())))));
+  RoadTrip hazelAndHenry = new RoadTrip("Hazel", "Henry", directions1);
+
+  Direction switch1 = new Direction("Switch with Henry", 0);
+  Direction switch2 = new Direction("Switch with Hazel", 12);
+  Direction switch3 = new Direction("Switch with Henry", 15);
+  Direction switch4 = new Direction("Switch with Hazel", 15);
+  Direction overpass2 = new Direction("Take the overpass", 3);
+
+  ILoDirection directions2 = new ConsLoDirection(this.alb, new ConsLoDirection(this.fork1,
+      new ConsLoDirection(this.switch1,
+          new ConsLoDirection(this.fork2, new ConsLoDirection(this.switch2,
+              new ConsLoDirection(this.switch3,
+                  new ConsLoDirection(this.switch4, new ConsLoDirection(this.overpass2,
+                      new ConsLoDirection(this.dest, this.mtDir)))))))));
+
+  RoadTripChunk rtc1 = new RoadTripChunk("Hazel",
+      new ConsLoDirection(alb, new ConsLoDirection(this.fork1,
+          new ConsLoDirection(this.switch1, this.mtDir))));
+  RoadTripChunk rtc2 = new RoadTripChunk("Henry",
+      new ConsLoDirection(fork2, new ConsLoDirection(this.switch2, this.mtDir)));
+  RoadTripChunk rtc3 = new RoadTripChunk("Hazel", new ConsLoDirection(switch3, this.mtDir));
+  RoadTripChunk rtc4 = new RoadTripChunk("Henry", new ConsLoDirection(switch4, this.mtDir));
+  RoadTripChunk rtc5 = new RoadTripChunk("Hazel", new ConsLoDirection(this.overpass2,
+      new ConsLoDirection(this.dest, this.mtDir)));
+
+  ILoRoadTripChunk hazelHenryFinal = new ConsLoRoadTripChunk(rtc1,
+      new ConsLoRoadTripChunk(rtc2, new ConsLoRoadTripChunk(rtc3, new ConsLoRoadTripChunk(rtc4,
+          new ConsLoRoadTripChunk(rtc5, mtRTC)))));
+
+  Direction left1 = new Direction("Make a left", 2);
+  Direction right1 = new Direction("Make a right", 5);
+  Direction merge1 = new Direction("Merge right", 7);
+  Direction exit = new Direction("Take the exit", 22);
+  Direction left2 = new Direction("Make a left", 4);
+  Direction dest1 = new Direction("You have arrived", 2);
+
+  Direction switchEx1 = new Direction("Switch with Doe", 1);
+  Direction mergeSplit1 = new Direction("Merge right", 6);
+  Direction switchEx2 = new Direction("Switch with John", 2);
+  Direction switchEx3 = new Direction("Switch with Doe", 8);
+  Direction switchEx4 = new Direction("Switch with John", 8);
+  Direction exitSplit1 = new Direction("Take the exit", 4);
+  Direction switchEx5 = new Direction("Switch with Doe", 0);
+
+  ILoDirection exDirections = new ConsLoDirection(this.left1, new ConsLoDirection(this.right1,
+      new ConsLoDirection(this.merge1, new ConsLoDirection(this.exit,
+          new ConsLoDirection(this.left2, new ConsLoDirection(this.dest1, this.mtDir))))));
+
+  RoadTrip johnDoeTrip = new RoadTrip("John", "Doe", this.exDirections);
+
+  ILoDirection exSwitchDirections = new ConsLoDirection(this.left1, new ConsLoDirection(this.right1,
+      new ConsLoDirection(this.switchEx1, new ConsLoDirection(this.mergeSplit1,
+          new ConsLoDirection(this.switchEx2, new ConsLoDirection(this.switchEx3,
+              new ConsLoDirection(this.switchEx4,
+                  new ConsLoDirection(this.exitSplit1,
+                      new ConsLoDirection(this.left2, new ConsLoDirection(this.switchEx5,
+                          new ConsLoDirection(this.dest1, this.mtDir)))))))))));
+
+  RoadTripChunk rtcEx1 = new RoadTripChunk("John",
+      new ConsLoDirection(this.left1, new ConsLoDirection(this.right1,
+          new ConsLoDirection(this.switchEx1, this.mtDir))));
+  RoadTripChunk rtcEx2 = new RoadTripChunk("Doe", new ConsLoDirection(this.mergeSplit1,
+      new ConsLoDirection(this.switchEx2, this.mtDir)));
+  RoadTripChunk rtcEx3 = new RoadTripChunk("John", new ConsLoDirection(this.switchEx3, this.mtDir));
+  RoadTripChunk rtcEx4 = new RoadTripChunk("Doe", new ConsLoDirection(this.switchEx4, this.mtDir));
+  RoadTripChunk rtcEx5 = new RoadTripChunk("John", new ConsLoDirection(this.exitSplit1,
+      new ConsLoDirection(this.left2, new ConsLoDirection(this.switchEx5, this.mtDir))));
+  RoadTripChunk rtcEx6 = new RoadTripChunk("Doe", new ConsLoDirection(this.dest1, this.mtDir));
+
+  ILoRoadTripChunk johnDoe = new ConsLoRoadTripChunk(this.rtcEx1,
+      new ConsLoRoadTripChunk(this.rtcEx2,
+          new ConsLoRoadTripChunk(this.rtcEx3,
+              new ConsLoRoadTripChunk(this.rtcEx4, new ConsLoRoadTripChunk(this.rtcEx5,
+                  new ConsLoRoadTripChunk(this.rtcEx6, this.mtRTC))))));
+
+  // Tests the method RoadTrip.splitUpTrip(int)
+  boolean testsplitUpTrip(Tester t) {
+    return t.checkExpect(this.mtRoadTrip.splitUpTrip(0), this.mtRTC)
+        && t.checkExpect(this.mtRoadTrip.splitUpTrip(10), this.mtRTC)
+        && t.checkExpect(this.hazelAndHenry.splitUpTrip(15), this.hazelHenryFinal)
+        && t.checkExpect(this.johnDoeTrip.splitUpTrip(8), this.johnDoe);
+  }
+
+  // Tests the method ILoDirection.splitUpTripHelper(String, String, int int)
+  boolean testSplitUpTripHelper(Tester t) {
+    return t.checkExpect(this.mtDir.splitUpTripHelper("A", "B", 0, 0), mtDir)
+        && t.checkExpect(this.mtDir.splitUpTripHelper("A", "B", 5, 5), mtDir)
+        && t.checkExpect(this.directions1.splitUpTripHelper("Hazel", "Henry", 15, 15),
+            this.directions2)
+        && t.checkExpect(this.exDirections.splitUpTripHelper("John", "Doe", 8, 8),
+            this.exSwitchDirections);
+  }
+
+  // Tests the method ILoDirection.switchDriver(String, String, int)
+  boolean testSwitchDriver(Tester t) {
+    return t.checkExpect(this.mtDir.switchDriver("A", "B", 8), this.mtDir)
+        && t.checkExpect(new ConsLoDirection(alb, this.mtDir).switchDriver("A", "B", 15),
+            new ConsLoDirection(new Direction("Switch with B", 0),
+                new ConsLoDirection(alb, this.mtDir)))
+        && t.checkExpect(new ConsLoDirection(this.left1, new ConsLoDirection(this.right1,
+            this.mtDir)).switchDriver("A", "B", 4),
+            new ConsLoDirection(new Direction("Switch with B", 0), new ConsLoDirection(this.left1,
+                new ConsLoDirection(new Direction("Switch with A", 2),
+                    new ConsLoDirection(new Direction("Make a right", 3), this.mtDir)))));
+  }
+
+  // Tests the method ILoDirection.splitIntoChunks(String, String)
+  boolean testSplitIntoChunks(Tester t) {
+    return t.checkExpect(this.mtDir.splitIntoChunks("A", "B"), this.mtRTC)
+        && t.checkExpect(this.directions2.splitIntoChunks("Hazel", "Henry"), this.hazelHenryFinal)
+        && t.checkExpect(this.exSwitchDirections.splitIntoChunks("John", "Doe"), this.johnDoe);
+  }
+
+  // Tests the method ILoDirection.directionsUntilSwitch()
+  boolean testDirectionsUntilSwitch(Tester t) {
+    return t.checkExpect(this.mtDir.directionsUntilSwitch(), this.mtDir)
+        && t.checkExpect(this.directions1.directionsUntilSwitch(), this.directions1)
+        && t.checkExpect(this.directions2.directionsUntilSwitch(),
+            new ConsLoDirection(this.alb, new ConsLoDirection(this.fork1,
+                new ConsLoDirection(this.switch1, this.mtDir))))
+        && t.checkExpect(this.exDirections.directionsUntilSwitch(), this.exDirections)
+        && t.checkExpect(this.exSwitchDirections.directionsUntilSwitch(),
+            new ConsLoDirection(this.left1, new ConsLoDirection(this.right1,
+                new ConsLoDirection(this.switchEx1, this.mtDir))));
+  }
+
+  // Tests the method ILoDirection.directionsAfterSwitch()
+  boolean testDirectionsAfterSwitch(Tester t) {
+    return t.checkExpect(this.mtDir.directionsAfterSwitch(), this.mtDir)
+        && t.checkExpect(this.directions1.directionsAfterSwitch(), this.mtDir)
+        && t.checkExpect(this.directions2.directionsAfterSwitch(),
+            new ConsLoDirection(this.fork2, new ConsLoDirection(this.switch2,
+                new ConsLoDirection(this.switch3,
+                    new ConsLoDirection(this.switch4, new ConsLoDirection(this.overpass2,
+                        new ConsLoDirection(this.dest, this.mtDir)))))))
+        && t.checkExpect(this.exDirections.directionsAfterSwitch(), this.mtDir)
+        && t.checkExpect(this.exSwitchDirections.directionsAfterSwitch(),
+            new ConsLoDirection(this.mergeSplit1,
+                new ConsLoDirection(this.switchEx2, new ConsLoDirection(this.switchEx3,
+                    new ConsLoDirection(this.switchEx4,
+                        new ConsLoDirection(this.exitSplit1,
+                            new ConsLoDirection(this.left2, new ConsLoDirection(this.switchEx5,
+                                new ConsLoDirection(this.dest1, this.mtDir)))))))));
+  }
+
+  // Tests the method Direction.milesDif(int)
+  boolean testMilesDif(Tester t) {
+    return t.checkExpect(this.alb.milesDif(2), -11)
+        && t.checkExpect(this.alb.milesDif(15), 2)
+        && t.checkExpect(this.alb.milesDif(13), 0)
+        && t.checkExpect(this.left1.milesDif(2), 0)
+        && t.checkExpect(this.right1.milesDif(2), -3)
+        && t.checkExpect(this.right1.milesDif(19), 14);
+  }
+
+  // Tests the method adjustMiles(int)
+  boolean testAdjustMiles(Tester t) {
+    return t.checkExpect(this.alb.adjustMiles(8), new Direction("Make a left at Alberquerque", 8))
+        && t.checkExpect(this.alb.adjustMiles(5), new Direction("Make a left at Alberquerque", 5))
+        && t.checkExpect(this.fork1.adjustMiles(3), new Direction("Make a right at the fork", 3))
+        && t.checkExpect(this.left1.adjustMiles(1), new Direction("Make a left", 1))
+        && t.checkExpect(this.merge1.adjustMiles(8), new Direction("Merge right", 8));
+  }
+
+  // Tests the method isSwitch()
+  boolean testIsSwitch(Tester t) {
+    return t.checkExpect(this.alb.isSwitch(), false)
+        && t.checkExpect(this.left1.isSwitch(), false)
+        && t.checkExpect(this.switch1.isSwitch(), true)
+        && t.checkExpect(this.dest.isSwitch(), false)
+        && t.checkExpect(this.switchEx1.isSwitch(), true);
+  }
+
+}
