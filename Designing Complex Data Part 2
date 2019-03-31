@@ -1,0 +1,32 @@
+// A Scoop represents the flavor of an ice cream
+class Scoop implements ISundae {
+  
+  String flavor;
+  
+  Scoop(String flavor) {
+    this.flavor = flavor;
+  }
+}
+
+// A Topping represents the topping on an ISundae
+class Topping implements ISundae {
+  ISundae inner;
+  String name;
+  
+  Topping(ISundae inner, String name) {
+    this.inner = inner;
+    this.name = name;
+  }
+}
+
+class ExamplesSundae {
+  ISundae chocolate = new Scoop("chocolate");
+  ISundae rainbowSprinkles = new Topping(chocolate, "rainbow sprinkles");
+  ISundae caramel = new Topping(rainbowSprinkles, "caramel");
+  ISundae yummy = new Topping(caramel, "whipped cream");
+  
+  ISundae vanilla = new Scoop("vanilla");
+  ISundae chocolateSprinkles = new Topping(vanilla, "chocolate sprinkles");
+  ISundae fudge = new Topping(chocolateSprinkles, "fudge");
+  ISundae noThankYou = new Topping(fudge, "plum sauce");
+}
