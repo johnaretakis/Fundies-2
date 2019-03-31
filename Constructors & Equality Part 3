@@ -1,0 +1,590 @@
+import tester.Tester;
+
+// A class that represents polynomials as a list of monomials (where each monomial is of 
+// unique degree)
+class Polynomial {
+  ILoMonomial monomials;
+
+  Polynomial(ILoMonomial monomials) {
+    if (monomials.hasSameDegree(new MtLoMonomial())) {
+      throw new IllegalArgumentException("Contains two monomials of the same degree.");
+    }
+    this.monomials = monomials;
+  }
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.monomials... - ILoMonomial
+   * 
+   * Methods:
+   * ...this.samePolynomial(Polynomial)... - boolean
+   */
+
+  // Checks to see if this polynomial is mathematically equivalent to other (i.e. terms with a value
+  // of 0 and order doesn't matter)
+  boolean samePolynomial(Polynomial other) {
+    ILoMonomial thisWithoutZeros = this.monomials.removeZeroCoefficient();
+    ILoMonomial otherWithoutZeros = other.monomials.removeZeroCoefficient();
+
+    return thisWithoutZeros.sameILoMonomial(otherWithoutZeros);
+  }
+}
+
+// An interface that represents a list of Monomial
+interface ILoMonomial {
+
+  // Checks to see if any of the monomials in this list have the same degree (keeping track of
+  // previous monomials with previous)
+  boolean hasSameDegree(ILoMonomial previous);
+
+  // Checks to see if any of the Monomials in this have the same degree as the given Monomial
+  boolean hasSameDegreeHelp(Monomial monomial);
+
+  // Checks to see if this ILoMonomial is the same as the other ILoMonomial (disregarding order, but
+  // not zeros)
+  boolean sameILoMonomial(ILoMonomial other);
+
+  // Checks to see if this ILoMonomial is the same as the given MtLoMonomial
+  boolean sameMtLoMonomial(MtLoMonomial other);
+
+  // Checks to see if this ILoMonomial is the same as the given ConsLoMonomial (disregarding order,
+  // but not zeros)
+  boolean sameConsLoMonomial(ConsLoMonomial other);
+
+  // Checks to see if all of the Monomials in this ILoMonomial are in other
+  boolean sameConsLoMonomialHelper(ILoMonomial other);
+
+  // Checks to see if this ILoMonomial contains the given Monomial
+  boolean containsMonomial(Monomial monomial);
+
+  // Removes all monomials in the list with a coefficient of 0
+  ILoMonomial removeZeroCoefficient();
+
+}
+
+// Represents an empty list of Monomials
+class MtLoMonomial implements ILoMonomial {
+
+  MtLoMonomial() {
+  }
+  /*
+   * TEMPLATE:
+   * Methods:
+   * ...this.hasSameDegree(ILoMonomial)... - boolean
+   * ...this.hasSameDegreeHelp(Monomial)... - boolean
+   * ...this.sameILoMonomial(ILoMonomial)... - boolean
+   * ...this.sameMtLoMonomial(MtLoMonomial)... - boolean
+   * ...this.sameConsLoMonomial(ConsLoMonomial)... - boolean
+   * ...this.sameConsLoMonomialHelper(ILoMonomial)... - boolean
+   * ...this.containsMonomial(Monomial)... - boolean
+   * ...this.removeZeroCoefficient()... - ILoMonomial
+   */
+
+  // Checks to see if any of the monomials in this list have the same degree (for an empty list,
+  // there are none)
+  public boolean hasSameDegree(ILoMonomial previous) {
+    return false;
+  }
+
+  // Checks to see if any of the Monomials in this have the same degree as the given Monomial (since
+  // there are none in this list, returns false)
+  public boolean hasSameDegreeHelp(Monomial monomial) {
+    return false;
+  }
+
+  // Checks to see if this ILoMonomial is the same as the other ILoMonomial (disregarding order, but
+  // not zeros)
+  public boolean sameILoMonomial(ILoMonomial other) {
+    return other.sameMtLoMonomial(this);
+  }
+
+  // Checks to see if this ILoMonomial is the same as the given MtLoMonomial
+  public boolean sameMtLoMonomial(MtLoMonomial other) {
+    return true;
+  }
+
+  // Checks to see if this ILoMonomial is the same as the given ConsLoMonomial (disregarding order,
+  // but not zeros) (since this is an MtLoMonomial, it cannot be the same as a ConsLoMonomial)
+  public boolean sameConsLoMonomial(ConsLoMonomial other) {
+    return false;
+  }
+
+  // Checks to see if all of the Monomials in this ILoMonomial are in other (since there are none,
+  // all of them technically are)
+  public boolean sameConsLoMonomialHelper(ILoMonomial other) {
+    return true;
+  }
+
+  // Checks to see if this ILoMonomial contains the given Monomial (since there are none, it cannot)
+  public boolean containsMonomial(Monomial current) {
+    return false;
+  }
+
+  // Removes all monomials in the list with a coefficient of 0 (since this list has no Monomials,
+  // returns this)
+  public ILoMonomial removeZeroCoefficient() {
+    return this;
+  }
+}
+
+// Represents a non-empty list of Monomials
+class ConsLoMonomial implements ILoMonomial {
+  Monomial first;
+  ILoMonomial rest;
+
+  ConsLoMonomial(Monomial first, ILoMonomial rest) {
+    this.first = first;
+    this.rest = rest;
+  }
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.first... - Monomial
+   * ...this.rest... - ILoMonomial
+   * 
+   * Methods:
+   * ...this.hasSameDegree(ILoMonomial)... - boolean
+   * ...this.hasSameDegreeHelp(Monomial)... - boolean
+   * ...this.sameILoMonomial(ILoMonomial)... - boolean
+   * ...this.sameMtLoMonomial(MtLoMonomial)... - boolean
+   * ...this.sameConsLoMonomial(ConsLoMonomial)... - boolean
+   * ...this.sameConsLoMonomialHelper(ILoMonomial)... - boolean
+   * ...this.containsMonomial(Monomial)... - boolean
+   * ...this.removeZeroCoefficient()... - ILoMonomial
+   */
+
+  // Checks to see if any of the monomials in this list have the same degree (keeping track of
+  // previous monomials with previous)
+  public boolean hasSameDegree(ILoMonomial previous) {
+    return previous.hasSameDegreeHelp(this.first)
+        || this.rest.hasSameDegree(new ConsLoMonomial(this.first, previous));
+  }
+
+  // Checks to see if any of the Monomials in this have the same degree as the given Monomial
+  public boolean hasSameDegreeHelp(Monomial monomial) {
+    return this.first.hasSameDegree(monomial) || this.rest.hasSameDegreeHelp(monomial);
+  }
+
+  // Checks to see if this ILoMonomial is the same as the other ILoMonomial (disregarding order, but
+  // not zeros)
+  public boolean sameILoMonomial(ILoMonomial other) {
+    return other.sameConsLoMonomial(this);
+  }
+
+  // Checks to see if this ILoMonomial is the same as the given MtLoMonomial (since this is a
+  // ConsLoMonomial, it cannot be the same as an MtLoMonomial
+  public boolean sameMtLoMonomial(MtLoMonomial other) {
+    return false;
+  }
+
+  // Checks to see if this ILoMonomial is the same as the given ConsLoMonomial (disregarding order,
+  // but not zeros)
+  public boolean sameConsLoMonomial(ConsLoMonomial other) {
+    return this.sameConsLoMonomialHelper(other) && other.sameConsLoMonomialHelper(this);
+  }
+
+  // Checks to see if all of the Monomials in this ILoMonomial are in other
+  public boolean sameConsLoMonomialHelper(ILoMonomial other) {
+    return other.containsMonomial(this.first) && this.rest.sameConsLoMonomialHelper(other);
+  }
+
+  // Checks to see if this ILoMonomial contains the given Monomial
+  public boolean containsMonomial(Monomial monomial) {
+    return this.first.isSameMonomial(monomial) || this.rest.containsMonomial(monomial);
+  }
+
+  // Removes all monomials in the list with a coefficient of 0
+  public ILoMonomial removeZeroCoefficient() {
+    if (this.first.isZero()) {
+      return this.rest.removeZeroCoefficient();
+    }
+    else {
+      return new ConsLoMonomial(this.first, this.rest.removeZeroCoefficient());
+    }
+  }
+}
+
+// Represents a Monomial by its non-negative degree and coefficient
+class Monomial {
+
+  int degree;
+  int coefficient;
+
+  Monomial(int degree, int coefficient) {
+    if (degree < 0) {
+      throw new IllegalArgumentException("Degree of " + degree + " is negative.");
+    }
+    this.degree = degree;
+    this.coefficient = coefficient;
+  }
+  /*
+   * TEMPATE:
+   * Fields:
+   * ...this.degree... - int
+   * ...this.coefficient... - int
+   * 
+   * Methods:
+   * ...this.hasSameDegree(Monomial)... - boolean
+   * ...this.isSameMonomial(Monomial)... - boolean
+   * ...this.isZero()... - boolean
+   */
+
+  // Checks to see if this Monomial has the same degree as other
+  boolean hasSameDegree(Monomial other) {
+    return this.degree == other.degree;
+  }
+
+  // Checks to see if this Monomial is the same as other (comparing degrees and coefficients)
+  boolean isSameMonomial(Monomial other) {
+    return this.degree == other.degree && this.coefficient == other.coefficient;
+  }
+
+  // Checks to see if this Monomial is equal to zero (i.e. the coefficient is 0)
+  boolean isZero() {
+    return coefficient == 0;
+  }
+}
+
+class ExamplesPolynomial {
+
+  Monomial m1 = new Monomial(0, 0);
+  Monomial m2 = new Monomial(1, 0);
+  Monomial m3 = new Monomial(2, 0);
+  Monomial m4 = new Monomial(3, 0);
+  Monomial m5 = new Monomial(4, 0);
+
+  Monomial m6 = new Monomial(1, 1);
+  Monomial m7 = new Monomial(2, 2);
+  Monomial m8 = new Monomial(3, 3);
+  Monomial m9 = new Monomial(4, 4);
+
+  Monomial m10 = new Monomial(5, 0);
+  Monomial m11 = new Monomial(1, 3);
+  Monomial m12 = new Monomial(2, 5);
+  Monomial m13 = new Monomial(3, 2);
+  Monomial m14 = new Monomial(4, 1);
+
+  Monomial m15 = new Monomial(5, 7);
+  Monomial m16 = new Monomial(5, 7);
+  Monomial m17 = new Monomial(5, 7);
+
+  Monomial m18 = new Monomial(6, 1);
+
+  Monomial m19 = new Monomial(3, -3);
+  Monomial m20 = new Monomial(0, -19);
+
+  MtLoMonomial mt = new MtLoMonomial();
+  MtLoMonomial mt1 = new MtLoMonomial();
+  MtLoMonomial mt2 = new MtLoMonomial();
+
+  ConsLoMonomial c1 = new ConsLoMonomial(m1, new ConsLoMonomial(m2,
+      new ConsLoMonomial(m3, new ConsLoMonomial(m4, new ConsLoMonomial(m5, mt)))));
+  ConsLoMonomial c2 = new ConsLoMonomial(m5, new ConsLoMonomial(m2,
+      new ConsLoMonomial(m4, new ConsLoMonomial(m3, new ConsLoMonomial(m1, mt)))));
+
+  ConsLoMonomial c3 = new ConsLoMonomial(m1, new ConsLoMonomial(m6,
+      new ConsLoMonomial(m7, new ConsLoMonomial(m8, new ConsLoMonomial(m9, mt)))));
+  ConsLoMonomial c4 = new ConsLoMonomial(m7, new ConsLoMonomial(m6,
+      new ConsLoMonomial(m8, new ConsLoMonomial(m9, new ConsLoMonomial(m1, mt)))));
+  ConsLoMonomial c5 = new ConsLoMonomial(m6, new ConsLoMonomial(m1, new ConsLoMonomial(m8,
+      new ConsLoMonomial(m7, new ConsLoMonomial(m9, new ConsLoMonomial(m10, mt))))));
+
+  ConsLoMonomial c6 = new ConsLoMonomial(m11,
+      new ConsLoMonomial(m12, new ConsLoMonomial(m13, new ConsLoMonomial(m14, mt))));
+
+  ConsLoMonomial c7 = new ConsLoMonomial(m1,
+      new ConsLoMonomial(m6, new ConsLoMonomial(m7, new ConsLoMonomial(m8, mt))));
+
+  ConsLoMonomial c8 = new ConsLoMonomial(m1, new ConsLoMonomial(m6,
+      new ConsLoMonomial(m7, new ConsLoMonomial(m8, new ConsLoMonomial(m9, mt)))));
+
+  ConsLoMonomial invc1 = new ConsLoMonomial(m1,
+      new ConsLoMonomial(m1, new ConsLoMonomial(m2, new ConsLoMonomial(m3, mt))));
+  ConsLoMonomial invc2 = new ConsLoMonomial(m6,
+      new ConsLoMonomial(m7, new ConsLoMonomial(m12, new ConsLoMonomial(m14, mt))));
+
+  Polynomial p0 = new Polynomial(mt);
+  Polynomial p1 = new Polynomial(c1);
+  Polynomial p2 = new Polynomial(c2);
+  Polynomial p3 = new Polynomial(c3);
+  Polynomial p4 = new Polynomial(c4);
+  Polynomial p5 = new Polynomial(c5);
+  Polynomial p6 = new Polynomial(c6);
+
+  Polynomial p7 = new Polynomial(c7);
+
+  // Tests the Polynomial constructor
+  boolean testPolynomial(Tester t) {
+    return t.checkExpect(p0, new Polynomial(mt)) && t.checkExpect(p1, new Polynomial(c1))
+        && t.checkExpect(p2, new Polynomial(c2)) && t.checkExpect(p3, new Polynomial(c3))
+        && t.checkExpect(p4, new Polynomial(c4)) && t.checkExpect(p5, new Polynomial(c5))
+        && t.checkExpect(p6, new Polynomial(c6))
+        && t.checkConstructorException(
+            new IllegalArgumentException("Contains two monomials of the same degree."),
+            "Polynomial", invc1)
+        && t.checkConstructorException(
+            new IllegalArgumentException("Contains two monomials of the same degree."),
+            "Polynomial", invc2);
+  }
+
+  // Tests the method Polynomial.samePolynomial(Polynomial)
+  boolean testSamePolynomial(Tester t) {
+    return t.checkExpect(this.p0.samePolynomial(this.p0), true)
+        && t.checkExpect(this.p0.samePolynomial(this.p1), true)
+        && t.checkExpect(this.p1.samePolynomial(this.p0), true)
+        && t.checkExpect(this.p1.samePolynomial(this.p2), true)
+        && t.checkExpect(this.p2.samePolynomial(this.p1), true)
+        && t.checkExpect(this.p0.samePolynomial(this.p2), true)
+        && t.checkExpect(this.p2.samePolynomial(this.p0), true)
+        && t.checkExpect(this.p3.samePolynomial(this.p3), true)
+        && t.checkExpect(this.p3.samePolynomial(this.p4), true)
+        && t.checkExpect(this.p4.samePolynomial(this.p3), true)
+        && t.checkExpect(this.p4.samePolynomial(this.p5), true)
+        && t.checkExpect(this.p5.samePolynomial(this.p4), true)
+        && t.checkExpect(this.p3.samePolynomial(this.p5), true)
+        && t.checkExpect(this.p5.samePolynomial(this.p3), true)
+        && t.checkExpect(this.p0.samePolynomial(this.p6), false)
+        && t.checkExpect(this.p6.samePolynomial(this.p0), false)
+        && t.checkExpect(this.p1.samePolynomial(this.p6), false)
+        && t.checkExpect(this.p6.samePolynomial(this.p1), false)
+        && t.checkExpect(this.p3.samePolynomial(this.p6), false)
+        && t.checkExpect(this.p6.samePolynomial(this.p3), false)
+        && t.checkExpect(this.p2.samePolynomial(this.p5), false)
+        && t.checkExpect(this.p5.samePolynomial(this.p2), false)
+        && t.checkExpect(this.p3.samePolynomial(this.p7), false)
+        && t.checkExpect(this.p7.samePolynomial(this.p3), false);
+  }
+
+  // Tests the method ILoMonomial.hasSameDegree(ILoMonomial)
+  boolean testILoMonomialHasSameDegree(Tester t) {
+    return t.checkExpect(this.mt.hasSameDegree(this.mt), false)
+        && t.checkExpect(this.c1.hasSameDegree(this.mt), false)
+        && t.checkExpect(this.c2.hasSameDegree(this.mt), false)
+        && t.checkExpect(this.c3.hasSameDegree(this.mt), false)
+        && t.checkExpect(this.c4.hasSameDegree(this.mt), false)
+        && t.checkExpect(this.c5.hasSameDegree(this.mt), false)
+        && t.checkExpect(this.c6.hasSameDegree(this.mt), false)
+        && t.checkExpect(this.c7.hasSameDegree(this.mt), false)
+        && t.checkExpect(this.invc1.hasSameDegree(this.mt), true)
+        && t.checkExpect(this.invc2.hasSameDegree(this.mt), true)
+        && t.checkExpect(this.c1.hasSameDegree(this.c2), true)
+        && t.checkExpect(this.c3.hasSameDegree(this.c7), true);
+  }
+
+  // Tests the method ILoMonomial.hasSameDegreeHelp(Monomial)
+  boolean testHasSameDegreeHelp(Tester t) {
+    return t.checkExpect(this.mt.hasSameDegreeHelp(this.m1), false)
+        && t.checkExpect(this.c1.hasSameDegreeHelp(this.m2), true)
+        && t.checkExpect(this.c1.hasSameDegreeHelp(this.m6), true)
+        && t.checkExpect(this.c1.hasSameDegreeHelp(this.m10), false)
+        && t.checkExpect(this.c3.hasSameDegreeHelp(this.m8), true)
+        && t.checkExpect(this.c3.hasSameDegreeHelp(this.m3), true)
+        && t.checkExpect(this.c3.hasSameDegreeHelp(this.m10), false)
+        && t.checkExpect(this.c5.hasSameDegreeHelp(this.m8), true)
+        && t.checkExpect(this.c5.hasSameDegreeHelp(this.m13), true)
+        && t.checkExpect(this.c5.hasSameDegreeHelp(this.m18), false)
+        && t.checkExpect(this.c7.hasSameDegreeHelp(this.m7), true)
+        && t.checkExpect(this.c7.hasSameDegreeHelp(this.m12), true)
+        && t.checkExpect(this.c7.hasSameDegreeHelp(this.m9), false)
+        && t.checkExpect(this.invc1.hasSameDegreeHelp(this.m2), true)
+        && t.checkExpect(this.invc1.hasSameDegreeHelp(this.m7), true)
+        && t.checkExpect(this.invc1.hasSameDegreeHelp(this.m5), false);
+  }
+
+  // Tests the method ILoMonomial.sameILoMonomial(ILoMonomial)
+  boolean testSameILoMonomial(Tester t) {
+    return t.checkExpect(this.mt.sameILoMonomial(this.mt), true)
+        && t.checkExpect(this.mt.sameILoMonomial(this.mt1), true)
+        && t.checkExpect(this.mt1.sameILoMonomial(this.mt), true)
+        && t.checkExpect(this.mt1.sameILoMonomial(this.mt2), true)
+        && t.checkExpect(this.mt2.sameILoMonomial(this.mt1), true)
+        && t.checkExpect(this.mt.sameILoMonomial(this.mt2), true)
+        && t.checkExpect(this.mt2.sameILoMonomial(this.mt), true)
+        && t.checkExpect(this.mt.sameILoMonomial(this.c1), false)
+        && t.checkExpect(this.c1.sameILoMonomial(this.mt), false)
+        && t.checkExpect(this.c3.sameILoMonomial(this.c3), true)
+        && t.checkExpect(this.c3.sameILoMonomial(this.c4), true)
+        && t.checkExpect(this.c4.sameILoMonomial(this.c3), true)
+        && t.checkExpect(this.c4.sameILoMonomial(this.c8), true)
+        && t.checkExpect(this.c8.sameILoMonomial(this.c4), true)
+        && t.checkExpect(this.c3.sameILoMonomial(this.c8), true)
+        && t.checkExpect(this.c8.sameILoMonomial(this.c3), true)
+        && t.checkExpect(this.c3.sameILoMonomial(this.c5), false)
+        && t.checkExpect(this.c5.sameILoMonomial(this.c3), false)
+        && t.checkExpect(this.mt.sameILoMonomial(this.c3), false)
+        && t.checkExpect(this.c3.sameILoMonomial(this.mt), false)
+        && t.checkExpect(this.c3.sameILoMonomial(this.c6), false)
+        && t.checkExpect(this.c6.sameILoMonomial(this.c3), false)
+        && t.checkExpect(this.c7.sameILoMonomial(this.c8), false)
+        && t.checkExpect(this.c8.sameILoMonomial(this.c7), false)
+        && t.checkExpect(this.invc1.sameILoMonomial(this.invc1), true)
+        && t.checkExpect(this.invc1.sameILoMonomial(this.invc2), false)
+        && t.checkExpect(this.invc2.sameILoMonomial(this.invc1), false);
+  }
+
+  // Tests the method ILoMonomial.sameMtLoMonomial(MtLoMonomial)
+  boolean testSameMtLoMonomial(Tester t) {
+    return t.checkExpect(this.mt.sameMtLoMonomial(this.mt), true)
+        && t.checkExpect(this.mt.sameMtLoMonomial(this.mt1), true)
+        && t.checkExpect(this.mt1.sameMtLoMonomial(this.mt), true)
+        && t.checkExpect(this.mt1.sameMtLoMonomial(this.mt2), true)
+        && t.checkExpect(this.mt2.sameMtLoMonomial(this.mt1), true)
+        && t.checkExpect(this.mt.sameMtLoMonomial(this.mt2), true)
+        && t.checkExpect(this.mt2.sameMtLoMonomial(this.mt), true)
+        && t.checkExpect(this.c1.sameMtLoMonomial(this.mt), false)
+        && t.checkExpect(this.c3.sameMtLoMonomial(this.mt), false);
+  }
+
+  // Tests the method ILoMonomial.sameConsLoMonomial(ConsLoMonomial)
+  boolean testSameConsLoMonomial(Tester t) {
+    return t.checkExpect(this.mt.sameConsLoMonomial(this.c1), false)
+        && t.checkExpect(this.c3.sameConsLoMonomial(this.c3), true)
+        && t.checkExpect(this.c3.sameConsLoMonomial(this.c4), true)
+        && t.checkExpect(this.c4.sameConsLoMonomial(this.c3), true)
+        && t.checkExpect(this.c4.sameConsLoMonomial(this.c8), true)
+        && t.checkExpect(this.c8.sameConsLoMonomial(this.c4), true)
+        && t.checkExpect(this.c3.sameConsLoMonomial(this.c8), true)
+        && t.checkExpect(this.c8.sameConsLoMonomial(this.c3), true)
+        && t.checkExpect(this.c3.sameConsLoMonomial(this.c5), false)
+        && t.checkExpect(this.c5.sameConsLoMonomial(this.c3), false)
+        && t.checkExpect(this.mt.sameConsLoMonomial(this.c3), false)
+        && t.checkExpect(this.c3.sameConsLoMonomial(this.c6), false)
+        && t.checkExpect(this.c6.sameConsLoMonomial(this.c3), false)
+        && t.checkExpect(this.c7.sameConsLoMonomial(this.c8), false)
+        && t.checkExpect(this.c8.sameConsLoMonomial(this.c7), false)
+        && t.checkExpect(this.invc1.sameConsLoMonomial(this.invc1), true)
+        && t.checkExpect(this.invc1.sameConsLoMonomial(this.invc2), false)
+        && t.checkExpect(this.invc2.sameConsLoMonomial(this.invc1), false);
+  }
+
+  // Tests the method ILoMonomial.sameConsLoMonomialHelper(ILoMonomial)
+  boolean testSameConsLoMonomialHelper(Tester t) {
+    return t.checkExpect(this.mt.sameConsLoMonomialHelper(this.mt), true)
+        && t.checkExpect(this.mt.sameConsLoMonomialHelper(this.c1), true)
+        && t.checkExpect(this.c1.sameConsLoMonomialHelper(this.mt), false)
+        && t.checkExpect(this.c1.sameConsLoMonomialHelper(this.c1), true)
+        && t.checkExpect(this.c1.sameConsLoMonomialHelper(this.c2), true)
+        && t.checkExpect(this.c2.sameConsLoMonomialHelper(this.c1), true)
+        && t.checkExpect(this.c1.sameConsLoMonomialHelper(this.c3), false)
+        && t.checkExpect(this.c3.sameConsLoMonomialHelper(this.c1), false)
+        && t.checkExpect(this.c3.sameConsLoMonomialHelper(this.c3), true)
+        && t.checkExpect(this.c3.sameConsLoMonomialHelper(this.c4), true)
+        && t.checkExpect(this.c4.sameConsLoMonomialHelper(this.c3), true)
+        && t.checkExpect(this.c4.sameConsLoMonomialHelper(this.c5), true)
+        && t.checkExpect(this.c5.sameConsLoMonomialHelper(this.c4), false)
+        && t.checkExpect(this.c3.sameConsLoMonomialHelper(this.c5), true)
+        && t.checkExpect(this.c5.sameConsLoMonomialHelper(this.c3), false)
+        && t.checkExpect(this.c1.sameConsLoMonomialHelper(this.c3), false)
+        && t.checkExpect(this.c3.sameConsLoMonomialHelper(this.c1), false)
+        && t.checkExpect(this.c3.sameConsLoMonomialHelper(this.c6), false)
+        && t.checkExpect(this.c6.sameConsLoMonomialHelper(this.c3), false)
+        && t.checkExpect(this.invc1.sameConsLoMonomialHelper(this.invc1), true)
+        && t.checkExpect(this.invc1.sameConsLoMonomialHelper(this.invc2), false)
+        && t.checkExpect(this.invc2.sameConsLoMonomialHelper(this.invc1), false);
+  }
+
+  // Tests the method ILoMonomial.containsMonomial(Monomial)
+  boolean testContainsMonomial(Tester t) {
+    return t.checkExpect(this.mt.containsMonomial(this.m1), false)
+        && t.checkExpect(this.c1.containsMonomial(this.m2), true)
+        && t.checkExpect(this.c1.containsMonomial(this.m8), false)
+        && t.checkExpect(this.c3.containsMonomial(this.m8), true)
+        && t.checkExpect(this.c3.containsMonomial(this.m10), false)
+        && t.checkExpect(this.c5.containsMonomial(this.m8), true)
+        && t.checkExpect(this.c5.containsMonomial(this.m10), true)
+        && t.checkExpect(this.c7.containsMonomial(this.m7), true)
+        && t.checkExpect(this.c7.containsMonomial(this.m17), false)
+        && t.checkExpect(this.invc1.containsMonomial(this.m2), true)
+        && t.checkExpect(this.invc1.containsMonomial(this.m5), false);
+  }
+
+  // Tests the method Polynomial.removeZeroCoefficient()
+  boolean testRemoveZeroCoefficient(Tester t) {
+    return t.checkExpect(this.mt.removeZeroCoefficient(), this.mt)
+        && t.checkExpect(this.c1.removeZeroCoefficient(), this.mt)
+        && t.checkExpect(this.c2.removeZeroCoefficient(), this.mt)
+        && t.checkExpect(this.c5.removeZeroCoefficient(),
+            new ConsLoMonomial(m6,
+                new ConsLoMonomial(m8, new ConsLoMonomial(m7, new ConsLoMonomial(m9, mt)))))
+        && t.checkExpect(this.c3.removeZeroCoefficient(),
+            new ConsLoMonomial(m6,
+                new ConsLoMonomial(m7, new ConsLoMonomial(m8, new ConsLoMonomial(m9, mt)))))
+        && t.checkExpect(this.c6.removeZeroCoefficient(), this.c6);
+  }
+
+  // Tests the Monomial constructor
+  boolean testMonomial(Tester t) {
+    return t.checkExpect(this.m1, new Monomial(0, 0))
+        && t.checkExpect(this.m2, new Monomial(1, 0))
+        && t.checkExpect(this.m3, new Monomial(2, 0))
+        && t.checkExpect(this.m4, new Monomial(3, 0))
+        && t.checkExpect(this.m5, new Monomial(4, 0))
+        && t.checkExpect(this.m6, new Monomial(1, 1))
+        && t.checkExpect(this.m7, new Monomial(2, 2))
+        && t.checkExpect(this.m8, new Monomial(3, 3))
+        && t.checkExpect(this.m9, new Monomial(4, 4))
+        && t.checkExpect(this.m10, new Monomial(5, 0))
+        && t.checkExpect(this.m11, new Monomial(1, 3))
+        && t.checkExpect(this.m12, new Monomial(2, 5))
+        && t.checkExpect(this.m13, new Monomial(3, 2))
+        && t.checkExpect(this.m14, new Monomial(4, 1))
+        && t.checkExpect(this.m15, new Monomial(5, 7))
+        && t.checkExpect(this.m16, new Monomial(5, 7))
+        && t.checkExpect(this.m17, new Monomial(5, 7))
+        && t.checkExpect(this.m18, new Monomial(6, 1))
+        && t.checkExpect(this.m19, new Monomial(3, -3))
+        && t.checkExpect(this.m20, new Monomial(0, -19))
+        && t.checkConstructorException(new IllegalArgumentException("Degree of -1 is negative."),
+            "Monomial", -1, 0)
+        && t.checkConstructorException(new IllegalArgumentException("Degree of -1 is negative."),
+            "Monomial", -1, 19)
+        && t.checkConstructorException(new IllegalArgumentException("Degree of -1 is negative."),
+            "Monomial", -1, -3)
+        && t.checkConstructorException(new IllegalArgumentException("Degree of -3 is negative."),
+            "Monomial", -3, 0)
+        && t.checkConstructorException(new IllegalArgumentException("Degree of -3 is negative."),
+            "Monomial", -3, 42)
+        && t.checkConstructorException(new IllegalArgumentException("Degree of -3 is negative."),
+            "Monomial", -3, -63);
+  }
+
+  // Tests the method Monomial.hasSameDegree(Monomial)
+  boolean testMonomialHasSameDegree(Tester t) {
+    return t.checkExpect(this.m1.hasSameDegree(this.m1), true)
+        && t.checkExpect(this.m1.hasSameDegree(this.m2), false)
+        && t.checkExpect(this.m2.hasSameDegree(this.m1), false)
+        && t.checkExpect(this.m3.hasSameDegree(this.m3), true)
+        && t.checkExpect(this.m3.hasSameDegree(this.m4), false)
+        && t.checkExpect(this.m4.hasSameDegree(this.m3), false)
+        && t.checkExpect(this.m1.hasSameDegree(this.m20), true)
+        && t.checkExpect(this.m20.hasSameDegree(this.m1), true)
+        && t.checkExpect(this.m2.hasSameDegree(this.m6), true)
+        && t.checkExpect(this.m6.hasSameDegree(this.m2), true)
+        && t.checkExpect(this.m3.hasSameDegree(this.m7), true)
+        && t.checkExpect(this.m7.hasSameDegree(this.m3), true)
+        && t.checkExpect(this.m4.hasSameDegree(this.m8), true)
+        && t.checkExpect(this.m8.hasSameDegree(this.m4), true)
+        && t.checkExpect(this.m5.hasSameDegree(this.m9), true)
+        && t.checkExpect(this.m9.hasSameDegree(this.m5), true);
+  }
+
+  // Tests the method Monomial.isSameMonomial(Monomial)
+  boolean testIsSameMonomial(Tester t) {
+    return t.checkExpect(this.m15.isSameMonomial(m15), true)
+        && t.checkExpect(this.m15.isSameMonomial(m16), true)
+        && t.checkExpect(this.m16.isSameMonomial(m15), true)
+        && t.checkExpect(this.m16.isSameMonomial(m17), true)
+        && t.checkExpect(this.m17.isSameMonomial(m16), true)
+        && t.checkExpect(this.m15.isSameMonomial(m17), true)
+        && t.checkExpect(this.m17.isSameMonomial(m15), true)
+        && t.checkExpect(this.m10.isSameMonomial(m15), false)
+        && t.checkExpect(this.m15.isSameMonomial(m10), false)
+        && t.checkExpect(this.m1.isSameMonomial(m1), true)
+        && t.checkExpect(this.m1.isSameMonomial(m2), false)
+        && t.checkExpect(this.m2.isSameMonomial(m1), false)
+        && t.checkExpect(this.m1.isSameMonomial(m10), false)
+        && t.checkExpect(this.m10.isSameMonomial(m1), false)
+        && t.checkExpect(this.m1.isSameMonomial(m19), false)
+        && t.checkExpect(this.m19.isSameMonomial(m1), false);
+  }
+}
