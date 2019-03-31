@@ -1,0 +1,557 @@
+import tester.*; // The tester library
+import javalib.worldimages.*;
+import java.awt.Color; 
+
+
+// Represents a Tree made up of Leaves, Stems, or Branches
+interface ITree {
+
+  // Draws this ITree
+  WorldImage draw();
+
+  // Returns true if any of the Stems or Branches have twigs that point downwards
+  boolean isDrooping();
+
+  /**
+   * 
+   * @param leftLength  - the length of the new left twig
+   * @param rightLength - the length of the new right twig
+   * @param leftTheta   - the angle of the new left twig in degrees
+   * @param rightTheta  - the angle of the new right twig in degrees
+   * @param otherTree   - the other ITree with which this ITree is to be combined
+   * @return - an ITree with this ITree on the left and otherTree on the right
+   */
+  ITree combine(int leftLength, int rightLength, double leftTheta, double rightTheta,
+      ITree otherTree);
+
+  // Rotates this Leaf by theta (where counterclockwise is a positive rotation)
+  ITree rotate(double theta);
+
+  // Returns the width of this ITree
+  double getWidth();
+
+  // Finds the left most x-coordinate in this ITree
+  double findLeftMost(double minLeft, double currentX);
+
+  // Finds the right most x-coordinate in this ITree
+  double findRightMost(double maxRight, double currentX);
+}
+
+// Represents a Leaf in a tree
+class Leaf implements ITree {
+  int size; // represents the radius of the leaf
+  Color color; // the color to draw it
+
+  Leaf(int size, Color color) {
+    this.size = size;
+    this.color = color;
+  }
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.size... - int
+   * ...this.color... - Color
+   * Methods:
+   * ...this.draw()... - WorldImage
+   * ...this.isDrooping()... - boolean
+   * ...this.combine(int, int, double, double, ITree)... - ITree
+   * ...this.rotate(double)... - ITree
+   * ...this.getWidth()... - double
+   * ...this.findLeftMost(double, double)... - double
+   * ...this.findRightMost(double, double)... - double
+   */
+
+  // Draws this Leaf
+  public WorldImage draw() {
+    return new CircleImage(this.size, OutlineMode.SOLID, this.color);
+  }
+
+  // Returns true if any of the Stems or Branches have twigs that point downwards
+  // In the case of a Leaf, automatically returns false, since there are no Stems of Branches
+  public boolean isDrooping() {
+    return false;
+  }
+
+  /**
+   * 
+   * @param leftLength  - the length of the new left twig
+   * @param rightLength - the length of the new right twig
+   * @param leftTheta   - the angle of the new left twig in degrees
+   * @param rightTheta  - the angle of the new right twig in degrees
+   * @param otherTree   - the other ITree with which this Leaf is to be combined
+   * @return - an ITree with this Leaf on the left and ITree otherTree on the right
+   */
+  public ITree combine(int leftLength, int rightLength, double leftTheta, double rightTheta,
+      ITree otherTree) {
+    return new Branch(leftLength, rightLength, leftTheta, rightTheta, this,
+        otherTree.rotate(rightTheta));
+  }
+
+  // Rotates this ITree by theta (where counterclockwise is a positive rotation)
+  public ITree rotate(double theta) {
+    return this;
+  }
+
+  // Returns the width of this Leaf
+  public double getWidth() {
+    return 2 * size;
+  }
+
+  // Finds the left most x-coordinate in this ITree
+  public double findLeftMost(double minLeft, double currentX) {
+    return currentX - size;
+  }
+
+  // Finds the right most x-coordinate in this ITree
+  public double findRightMost(double minLeft, double currentX) {
+    return currentX + size;
+  }
+}
+
+// Represents a Stem in a tree
+class Stem implements ITree {
+  // How long this stick is
+  int length;
+  // The angle (in degrees) of this stem, relative to the +x axis
+  double theta;
+  // The rest of the tree
+  ITree tree;
+
+  Stem(int length, double theta, ITree tree) {
+    this.length = length;
+    this.theta = theta;
+    this.tree = tree;
+  }
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.length... - int
+   * ...this.theta... - double
+   * ...this.tree... - ITree
+   * Methods:
+   * ...this.draw()... - WorldImage
+   * ...this.isDrooping()... - boolean
+   * ...this.combine(int, int, double, double, ITree)... - ITree
+   * ...this.rotate(double)... - ITree
+   * ...this.getWidth(double)... - double
+   * ...this.findLeftMost(double, double)... - double
+   * ...this.findRightMost(double, double)... - double
+   * Methods of Fields:
+   * ...this.tree.draw()... - WorldImage
+   * ...this.tree.isDrooping()... - Boolean
+   * ...this.tree.combine(int, int, double, double, ITree)... - ITree
+   * ...this.tree.rotate(double)... - ITree
+   * ...this.tree.getWidth(double)... - double
+   * ...this.findLeftMost(double, double)... - double
+   * ...this.findRightMost(double, double)... - double
+   */
+
+  // Draws this Stem
+  public WorldImage draw() {
+    double thetar = Math.toRadians(theta);
+
+    Posn lineEndpoint = new Posn((int) (this.length * Math.cos(thetar)),
+        (int) (-this.length * Math.sin(thetar)));
+
+    WorldImage firstLine = new LineImage(lineEndpoint, Color.BLACK);
+
+    double pinholeX = (this.length * Math.cos(thetar) / 2);
+    double pinholeY = (-this.length * Math.sin(thetar) / 2);
+
+    WorldImage secondLine = firstLine.movePinhole(pinholeX, pinholeY);
+
+    WorldImage stemImage1 = new OverlayImage(this.tree.draw(), secondLine);
+
+    WorldImage finalImage = stemImage1.movePinhole(pinholeX * -2, pinholeY * -2);
+
+    return finalImage;
+  }
+
+  // Returns true if any of the Stems or Branches have twigs that point downwards
+  public boolean isDrooping() {
+    return (this.theta % 360 > 180) || this.tree.isDrooping();
+  }
+
+  /**
+   * 
+   * @param leftLength  - the length of the new left twig
+   * @param rightLength - the length of the new right twig
+   * @param leftTheta   - the angle of the new left twig in degrees
+   * @param rightTheta  - the angle of the new right twig in degrees
+   * @param otherTree   - the other ITree with which this Stem is to be combined
+   * @return - an ITree with this Stem on the left and otherTree on the right
+   */
+  public ITree combine(int leftLength, int rightLength, double leftTheta, double rightTheta,
+      ITree otherTree) {
+    return new Branch(leftLength, rightLength, leftTheta, rightTheta, this.rotate(leftTheta),
+        otherTree.rotate(rightTheta));
+  }
+
+  // Rotates this ITree to theta (where counterclockwise is a positive rotation)
+  public ITree rotate(double theta) {
+    return new Stem(this.length, theta, this.tree.rotate(theta));
+  }
+
+  // Returns the width of this ITree
+  public double getWidth() {
+    return this.findRightMost(0, 0) - this.findLeftMost(0, 0);
+  }
+
+  // Finds the left most x-coordinate in this Stem
+  public double findLeftMost(double minLeft, double currentX) {
+    double totalX = currentX + this.length * Math.cos(Math.toRadians(this.theta));
+
+    double newMinLeft = Math.min(totalX, minLeft);
+    return Math.min(newMinLeft, this.tree.findLeftMost(newMinLeft, totalX));
+  }
+
+  // Finds the right most x-coordinate in this Stem
+  public double findRightMost(double maxRight, double currentX) {
+    double totalX = currentX + this.length * Math.cos(Math.toRadians(this.theta));
+
+    double newMaxRight = Math.max(totalX, maxRight);
+    return Math.max(newMaxRight, this.tree.findRightMost(newMaxRight, totalX));
+  }
+
+}
+
+// Represents a Branch in this tree
+class Branch implements ITree {
+  // How long the left and right branches are
+  int leftLength;
+  int rightLength;
+  // The angle (in degrees) of the two branches, relative to the +x axis,
+  double leftTheta;
+  double rightTheta;
+  // The remaining parts of the tree
+  ITree left;
+  ITree right;
+
+  Branch(int leftLength, int rightLength, double leftTheta, double rightTheta,
+      ITree left, ITree right) {
+    this.leftLength = leftLength;
+    this.rightLength = rightLength;
+    this.leftTheta = leftTheta;
+    this.rightTheta = rightTheta;
+    this.left = left;
+    this.right = right;
+  }
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.leftLength... - int
+   * ...this.rightLength... - int
+   * ...this.leftTheta... - double
+   * ...this.rightTheta... - double
+   * ...this.left... - ITree
+   * ...this.right... - ITree
+   * Methods:
+   * ...this.draw()... - WorldImage
+   * ...this.drawLeft()... - WorldImage
+   * ...this.drawRight()... - WorldImage
+   * ...this.isDrooping()... - boolean
+   * ...this.rotate(double)... - ITree
+   * ...this.getWidth()... - double
+   * ...this.findLeftMost(double, double)... - double
+   * ...this.findRightMost(double, double)... - double
+   * Methods of Fields:
+   * ...this.left.draw()... - WorldImage
+   * ...this.left.isDrooping()... - Boolean
+   * ...this.left.rotate(double)... - ITree
+   * ...this.left.getWidth()... - double
+   * ...this.findLeftMost(double, double)... - double
+   * ...this.findRightMost(double, double)... - double
+   * 
+   * ...this.right.draw()... - WorldImage
+   * ...this.right.isDrooping()... - boolean
+   * ...this.left.rotate(double)... - ITree
+   * ...this.left.getWidth()... - double
+   * ...this.findLeftMost(double, double)... - double
+   * ...this.findRightMost(double, double)... - double
+   */
+
+  // Draws this Branch
+  public WorldImage draw() {
+
+    double leftThetar = Math.toRadians(this.leftTheta);
+    double rightThetar = Math.toRadians(this.rightTheta);
+
+    double leftPinholeX = -this.leftLength * Math.cos(leftThetar);
+    double leftPinholeY = this.leftLength * Math.sin(leftThetar);
+
+    double rightPinholeX = -this.rightLength * Math.cos(rightThetar);
+    double rightPinholeY = this.rightLength * Math.sin(rightThetar);
+
+    WorldImage leftTree = this.drawLeft().movePinhole(leftPinholeX, leftPinholeY);
+    WorldImage rightTree = this.drawRight().movePinhole(rightPinholeX, rightPinholeY);
+
+    return new OverlayImage(leftTree, rightTree);
+  }
+
+  // Draws the left side of this Branch
+  WorldImage drawLeft() {
+
+    double leftThetar = Math.toRadians(this.leftTheta);
+
+    Posn leftEndpoint = new Posn((int) (this.leftLength * Math.cos(leftThetar)),
+        (int) (-this.leftLength * Math.sin(leftThetar)));
+    WorldImage leftLine = new LineImage(leftEndpoint, Color.BLACK);
+
+    Posn leftPinholePoint = new Posn((int) (this.leftLength * Math.cos(leftThetar) / 2),
+        (int) (-this.leftLength * Math.sin(leftThetar) / 2));
+    WorldImage finalLeftLine = leftLine.movePinholeTo(leftPinholePoint);
+
+    WorldImage leftTree = new OverlayImage(this.left.draw(), finalLeftLine);
+
+    return leftTree;
+  }
+
+  // Draws the right side of this branch
+  WorldImage drawRight() {
+    double rightThetar = Math.toRadians(this.rightTheta);
+
+    Posn rightEndpoint = new Posn((int) (this.rightLength * Math.cos(rightThetar)),
+        (int) (-this.rightLength * Math.sin(rightThetar)));
+    WorldImage rightLine = new LineImage(rightEndpoint, Color.BLACK);
+
+    Posn rightPinholePoint = new Posn((int) (this.rightLength * Math.cos(rightThetar) / 2),
+        (int) (-this.rightLength * Math.sin(rightThetar) / 2));
+    WorldImage finalRightLine = rightLine.movePinholeTo(rightPinholePoint);
+
+    WorldImage rightTree = new OverlayImage(this.right.draw(), finalRightLine);
+
+    return rightTree;
+  }
+
+  // Returns true if any of the Stems or Branches have twigs that point downwards
+  public boolean isDrooping() {
+    return (this.leftTheta % 360 > 180) || (this.rightTheta % 360 > 180)
+        || (this.left.isDrooping() || this.right.isDrooping());
+  }
+
+  /**
+   * 
+   * @param leftLength  - the length of the new left twig
+   * @param rightLength - the length of the new right twig
+   * @param leftTheta   - the angle of the new left twig in degrees
+   * @param rightTheta  - the angle of the new right twig in degrees
+   * @param otherTree   - the other ITree with which this ITree is to be combined
+   * @return - an ITree with this Branch on the left and otherTree on the right
+   */
+  public ITree combine(int leftLength, int rightLength, double leftTheta, double rightTheta,
+      ITree otherTree) {
+    return new Branch(leftLength, rightLength, leftTheta, rightTheta, this.rotate(leftTheta),
+        otherTree.rotate(rightTheta));
+  }
+
+  // Rotates this Branch to theta (where counterclockwise is a positive rotation)
+  public ITree rotate(double theta) {
+    double angleDif = (this.leftTheta - this.rightTheta) / 2.0;
+
+    return new Branch(this.leftLength, this.rightLength,
+        theta + angleDif, theta - angleDif,
+        this.left.rotate(theta + angleDif), this.right.rotate(theta - angleDif));
+  }
+
+  // Returns the width of this Branch
+  public double getWidth() {
+
+    return this.findRightMost(0, 0) - this.findLeftMost(0, 0);
+  }
+
+  // Returns the left most x-coordinate in this Branch
+  public double findLeftMost(double minLeft, double currentX) {
+    double totalLeftBranchX = currentX + this.leftLength * Math.cos(Math.toRadians(this.leftTheta));
+    double totalRightBranchX = currentX
+        + this.rightLength * Math.cos(Math.toRadians(this.rightTheta));
+    double newMinLeft = Math.min(Math.min(totalLeftBranchX, totalRightBranchX), minLeft);
+    return Math.min(newMinLeft, Math.min(this.left.findLeftMost(newMinLeft, totalLeftBranchX),
+        this.right.findLeftMost(newMinLeft, totalRightBranchX)));
+  }
+
+  // Returns the right most x-coordinate in this Branch
+  public double findRightMost(double maxRight, double currentX) {
+    double totalLeftBranchX = currentX + this.leftLength * Math.cos(Math.toRadians(this.leftTheta));
+    double totalRightBranchX = currentX
+        + this.rightLength * Math.cos(Math.toRadians(this.rightTheta));
+
+    double newMaxRight = Math.max(Math.max(totalLeftBranchX, totalRightBranchX), maxRight);
+    return Math.max(newMaxRight, Math.max(this.left.findRightMost(newMaxRight, totalLeftBranchX),
+        this.right.findRightMost(newMaxRight, totalRightBranchX)));
+  }
+}
+
+class ExamplesTrees {
+
+  ITree redLeaf = new Leaf(10, Color.RED);
+  ITree blueLeaf = new Leaf(15, Color.BLUE);
+  ITree greenLeaf = new Leaf(15, Color.GREEN);
+  ITree orangeLeaf = new Leaf(8, Color.ORANGE);
+
+  ITree TREE1 = new Branch(30, 30, 135, 40, redLeaf, blueLeaf);
+  ITree TREE2 = new Branch(30, 30, 115, 65, greenLeaf, orangeLeaf);
+  ITree STEM1 = new Stem(40, 90, TREE1);
+  ITree STEM2 = new Stem(50, 90, TREE2);
+
+  ITree STEM3 = new Stem(80, 90, redLeaf);
+  ITree TREE3 = new Branch(30, 45, 150, 30, TREE2, TREE1);
+
+  // Drooping Trees
+  ITree TREE4 = new Branch(30, 30, 200, 30, this.redLeaf, this.blueLeaf);
+  ITree TREE5 = new Branch(30, 30, 180, 45, this.orangeLeaf, this.redLeaf);
+  ITree TREE6 = new Branch(30, 30, 40, 225, this.greenLeaf, this.blueLeaf);
+  ITree TREE7 = new Branch(30, 30, 40, 180, this.greenLeaf, this.orangeLeaf);
+  ITree TREE8 = new Branch(30, 30, 45, 45, this.TREE4, this.TREE1);
+  ITree TREE9 = new Branch(30, 30, 45, 45, this.STEM1, this.TREE4);
+  ITree TREE10 = new Branch(30, 30, 360, 360, this.greenLeaf, this.blueLeaf);
+
+  // Drooping Stems
+  ITree STEM4 = new Stem(40, 225, this.greenLeaf);
+  ITree STEM5 = new Stem(45, 180, this.orangeLeaf);
+  ITree STEM6 = new Stem(19, 315, this.blueLeaf);
+  ITree STEM7 = new Stem(24, 360, this.orangeLeaf);
+  ITree STEM8 = new Stem(24, 45, this.STEM4);
+
+  // Inward pointing ITree
+  ITree TREE11 = new Branch(30, 30, 35, 20, redLeaf, redLeaf);
+  ITree TREE12 = new Branch(30, 30, 130, 60, TREE9, TREE8);
+
+  Branch branch1 = new Branch(30, 30, 135, 40, this.redLeaf, this.blueLeaf);
+  Branch branch2 = new Branch(30, 45, 150, 30, this.TREE2, this.TREE1);
+
+  // Tests the method ITree.draw()
+  boolean testDraw(Tester t) {
+    return t.checkExpect(redLeaf.draw(), new CircleImage(10, OutlineMode.SOLID, Color.RED))
+        && t.checkExpect(TREE1.draw(), new OverlayImage(
+            branch1.drawLeft().movePinhole(-30 * Math.cos(Math.toRadians(135)),
+                30 * Math.sin(Math.toRadians(135))),
+            branch1.drawRight().movePinhole(-30 * Math.cos(Math.toRadians(40)),
+                30 * Math.sin(Math.toRadians(40)))))
+        && t.checkExpect(STEM2.draw(), new OverlayImage(this.TREE2.draw(),
+            new LineImage(new Posn(0, -50), Color.BLACK).movePinhole(0, -25)).movePinhole(0, 50));
+  }
+
+  // Tests the method Branch.drawLeft()
+  boolean testDrawLeft(Tester t) {
+    return t.checkExpect(this.branch1.drawLeft(),
+        new OverlayImage(new CircleImage(10, OutlineMode.SOLID, Color.RED),
+            new LineImage(
+                new Posn((int) (30 * Math.cos(Math.toRadians(135))),
+                    (int) (-30 * Math.sin(Math.toRadians(135)))),
+                Color.BLACK).movePinholeTo(
+                    new Posn((int) (15 * Math.cos(Math.toRadians(135))),
+                        (int) (-15 * Math.sin(Math.toRadians(135)))))))
+        && t.checkExpect(this.branch2.drawLeft(),
+            new OverlayImage(TREE2.draw(),
+                new LineImage(
+                    new Posn((int) (30 * Math.cos(Math.toRadians(150))),
+                        (int) (-30 * Math.sin(Math.toRadians(150)))),
+                    Color.BLACK).movePinholeTo(
+                        new Posn((int) (15 * Math.cos(Math.toRadians(150))),
+                            (int) (-15 * Math.sin(Math.toRadians(150)))))));
+  }
+
+  // Tests the method Branch.drawRight()
+  boolean testDrawRight(Tester t) {
+    return t.checkExpect(this.branch1.drawRight(),
+        new OverlayImage(new CircleImage(15, OutlineMode.SOLID, Color.BLUE),
+            new LineImage(
+                new Posn((int) (30 * Math.cos(Math.toRadians(40))),
+                    (int) (-30 * Math.sin(Math.toRadians(40)))),
+                Color.BLACK).movePinholeTo(
+                    new Posn((int) (15 * Math.cos(Math.toRadians(40))),
+                        (int) (-15 * Math.sin(Math.toRadians(40)))))))
+        && t.checkExpect(this.branch2.drawRight(),
+            new OverlayImage(TREE1.draw(),
+                new LineImage(
+                    new Posn((int) (45 * Math.cos(Math.toRadians(30))),
+                        (int) (-45 * Math.sin(Math.toRadians(30)))),
+                    Color.BLACK).movePinholeTo(
+                        new Posn((int) (22.5 * Math.cos(Math.toRadians(30))),
+                            (int) (-22.5 * Math.sin(Math.toRadians(30)))))));
+
+  }
+
+  // Tests the method ITree.isDrooping()
+  boolean testIsDrooping(Tester t) {
+    return t.checkExpect(this.redLeaf.isDrooping(), false)
+        && t.checkExpect(this.blueLeaf.isDrooping(), false)
+        && t.checkExpect(this.TREE1.isDrooping(), false)
+        && t.checkExpect(this.TREE2.isDrooping(), false)
+        && t.checkExpect(this.STEM1.isDrooping(), false)
+        && t.checkExpect(this.STEM2.isDrooping(), false)
+        && t.checkExpect(this.STEM3.isDrooping(), false)
+        && t.checkExpect(this.TREE3.isDrooping(), false)
+        && t.checkExpect(this.TREE4.isDrooping(), true)
+        && t.checkExpect(this.TREE5.isDrooping(), false)
+        && t.checkExpect(this.TREE6.isDrooping(), true)
+        && t.checkExpect(this.TREE7.isDrooping(), false)
+        && t.checkExpect(this.TREE8.isDrooping(), true)
+        && t.checkExpect(this.TREE9.isDrooping(), true)
+        && t.checkExpect(this.TREE10.isDrooping(), false)
+        && t.checkExpect(this.STEM4.isDrooping(), true)
+        && t.checkExpect(this.STEM5.isDrooping(), false)
+        && t.checkExpect(this.STEM6.isDrooping(), true)
+        && t.checkExpect(this.STEM7.isDrooping(), false)
+        && t.checkExpect(this.STEM8.isDrooping(), true);
+  }
+
+  // Tests the method ITree.combine(ITree)
+  boolean testCombine(Tester t) {
+    return t.checkExpect(this.TREE1.combine(40, 50, 150, 30, this.TREE2),
+        new Branch(40, 50, 150, 30,
+            new Branch(30, 30, 197.5, 102.5, this.redLeaf, this.blueLeaf),
+            new Branch(30, 30, 55, 5, this.greenLeaf, this.orangeLeaf)))
+        && t.checkExpect(this.STEM1.combine(30, 30, 170, 65, this.TREE2),
+            new Branch(30, 30, 170, 65,
+                new Stem(40, 170, this.TREE1.rotate(170)),
+                new Branch(30, 30, 90, 40, this.greenLeaf, this.orangeLeaf)))
+        && t.checkExpect(this.redLeaf.combine(40, 50, 97, 46, this.blueLeaf),
+            new Branch(40, 50, 97, 46, redLeaf, blueLeaf))
+        && t.checkExpect(this.STEM2.combine(25, 30, 140, 70, this.TREE1), 
+            new Branch(25, 30, 140, 70, 
+                new Stem(50, 140, new Branch(30, 30, 165, 115, this.greenLeaf, this.orangeLeaf)),
+                new Branch(30, 30, 117.5, 22.5, this.redLeaf, this.blueLeaf)));
+  }
+
+  // Tests the method ITree.getWidth()
+  boolean testGetWidth(Tester t) {
+    return t.checkExpect(this.redLeaf.getWidth(), 20.0)
+        && t.checkInexact(this.TREE1.getWidth(), 69.1945, 0.001)
+        && t.checkInexact(this.TREE2.getWidth(), 48.357, 0.001)
+        && t.checkInexact(new Branch(40, 50, 150, 30, TREE1, TREE2).getWidth(), 129.834, 0.001)
+        && t.checkInexact(this.TREE11.getWidth(), 38.19078, 0.001)
+        && t.checkInexact(this.STEM1.getWidth(), 69.1945, 0.001)
+        && t.checkInexact(this.TREE8.getWidth(), 79.1715, 0.001);
+  }
+
+  // Tests the method ITree.rotate(double)
+  boolean testRotate(Tester t) {
+    return t.checkExpect(this.redLeaf.rotate(100), this.redLeaf)
+        && t.checkExpect(this.blueLeaf.rotate(0), this.blueLeaf)
+        && t.checkExpect(this.STEM4.rotate(100), new Stem(40, 100, this.greenLeaf))
+        && t.checkExpect(this.STEM1.rotate(200), new Stem(40, 200, this.TREE1.rotate(200)))
+        && t.checkExpect(this.TREE1.rotate(50),
+            new Branch(30, 30, 97.5, 2.5, this.redLeaf, this.blueLeaf))
+        && t.checkExpect(this.TREE8.rotate(67),
+            new Branch(30, 30, 67, 67, TREE4.rotate(67), TREE1.rotate(67)));
+  }
+
+  // Tests the method ITree.findLeftMost()
+  boolean testFindLeftMost(Tester t) {
+    return t.checkExpect(this.blueLeaf.findLeftMost(0, 0), -15.0)
+        && t.checkInexact(this.TREE1.findLeftMost(0, 0), -31.2132, 0.001)
+        && t.checkInexact(this.STEM1.findLeftMost(0, 0), -31.2132, 0.001)
+        && t.checkInexact(this.TREE2.findLeftMost(0, 0), -27.6785, 0.001)
+        && t.checkInexact(this.TREE8.findLeftMost(0, 0), -16.9776, 0.001);
+  }
+
+  // Tests the method ITree.findRightMost()
+  boolean testFindRightMost(Tester t) {
+    return t.checkExpect(this.blueLeaf.findRightMost(0, 0), 15.0)
+        && t.checkInexact(this.TREE1.findRightMost(0, 0), 37.9873, 0.001)
+        && t.checkInexact(this.STEM1.findRightMost(0, 0), 37.9813, 0.001)
+        && t.checkInexact(this.TREE2.findRightMost(0, 0), 20.6785, 0.001)
+        && t.checkInexact(this.TREE8.findRightMost(0, 0), 62.1940, 0.001);
+  }
+}
