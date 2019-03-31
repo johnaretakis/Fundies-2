@@ -1,0 +1,272 @@
+import tester.*;
+
+// course class houses courses by name and by a list of their prerequisites
+class Course {
+  String name;
+  IList<Course> prereqs;
+
+  // class constructor
+  Course(String name, IList<Course> prereqs) {
+    this.name = name;
+    this.prereqs = prereqs;
+  }
+
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.name... - String
+   * ...this.prereqs... - IList<Course>
+   * 
+   * Methods:
+   * ...this.getDeepestPathLength()... - int
+   * ...this.hasPrereq(String)... - boolean
+   */
+
+  // returns the length of the longest path length of a courses prerequisites
+  int getDeepestPathLength() {
+    return new DeepestPathLength().apply(this);
+  }
+
+  // determines if a course has a prerequisite
+  boolean hasPrereq(String name) {
+    return new HasPrereq(name).apply(this);
+  }
+
+}
+
+// represents a function that takes in A and returns R
+interface IFunc<A, R> {
+
+  // applies an argument
+  R apply(A arg);
+
+}
+
+// represents a list that takes in T
+interface IList<T> {
+
+  // accepts the visitor
+  <R> R accept(IListVisitor<T, R> visitor);
+
+}
+
+// represents a list that visits the function that takes in T and returns R
+interface IListVisitor<T, R> extends IFunc<IList<T>, R> {
+
+  // visits the empty list
+  R visitMtList(MtList<T> mt);
+
+  // visits the cons list
+  R visitConsList(ConsList<T> cons);
+
+}
+
+// represents and empty list
+class MtList<T> implements IList<T> {
+
+  /*
+   * TEMPLATE:
+   * Methods:
+   * ...this.accept(IListVisitor<T, R>)... - R
+   */
+
+  // accepts the visitor and visits the empty list
+  public <R> R accept(IListVisitor<T, R> visitor) {
+    return visitor.visitMtList(this);
+  }
+
+}
+
+// represents the cons list
+class ConsList<T> implements IList<T> {
+  T first;
+  IList<T> rest;
+
+  // class constructor
+  ConsList(T first, IList<T> rest) {
+    this.first = first;
+    this.rest = rest;
+  }
+
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.first... - T
+   * ...this.rest... - IList<T>
+   * 
+   * Methods:
+   * ...this.accept(IListVisitor<T, R>)... - R
+   */
+
+  // accepts the visitor and visits the cons list
+  public <R> R accept(IListVisitor<T, R> visitor) {
+    return visitor.visitConsList(this);
+  }
+
+}
+
+// represents the deepest path length in a list of courses
+class DeepestPathLength implements IFunc<Course, Integer> {
+
+  /*
+   * TEMPLATE:
+   * Methods:
+   * ...this.apply(Course)... - Integer
+   */
+
+  // applies a course to the prerequisites
+  public Integer apply(Course c) {
+    return 1 + c.prereqs.accept(new ListDeepestPathLength());
+  }
+
+}
+
+// represents the list of deepest path lengths
+class ListDeepestPathLength implements IListVisitor<Course, Integer> {
+
+  /*
+   * TEMPLATE:
+   * Methods:
+   * ...this.visitMtList(MtList<Course>)... - Integer
+   * ...this.visitConsList(ConsList<Course>)... - Integer
+   * ...this.apply(IList<Course>)... - Integer
+   */
+
+  // visits the empty list and returns -1
+  public Integer visitMtList(MtList<Course> mt) {
+    return -1;
+  }
+
+  // visits the cons list and returns the max length
+  public Integer visitConsList(ConsList<Course> cons) {
+    return Math.max(new DeepestPathLength().apply(cons.first), cons.rest.accept(this));
+  }
+
+  // applies the list of courses
+  public Integer apply(IList<Course> loc) {
+    return loc.accept(this);
+  }
+
+}
+
+// represents a predicate
+interface IPred<X> extends IFunc<X, Boolean> {
+
+  // applies an argument
+  Boolean apply(X arg);
+
+}
+
+// represents a course with a prerequisite
+class HasPrereq implements IPred<Course> {
+  String name;
+
+  // class constructor
+  HasPrereq(String name) {
+    this.name = name;
+  }
+
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.name... - String
+   * 
+   * Methods:
+   * ...this.apply(Course)... - Boolean
+   */
+
+  // applies a course to the prerequisites
+  public Boolean apply(Course c) {
+    return c.prereqs.accept(new Ormap<Course>(new HasPrereqHelper(name)));
+  }
+
+}
+
+// helps the HasPrereq class
+class HasPrereqHelper implements IPred<Course> {
+  String name;
+
+  // class constructor
+  HasPrereqHelper(String name) {
+    this.name = name;
+  }
+
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.name... - String
+   * 
+   * Methods:
+   * ...this.apply(Course)... - Boolean
+   */
+
+  // applies a course to the prerequisites
+  public Boolean apply(Course c) {
+    return c.prereqs.accept(new Ormap<Course>(this)) || this.name.equals(c.name);
+  }
+
+}
+
+// represents a list visitor
+class Ormap<T> implements IListVisitor<T, Boolean> {
+  IPred<T> pred;
+
+  // class constructor
+  Ormap(IPred<T> pred) {
+    this.pred = pred;
+  }
+
+  /*
+   * TEMPLATE:
+   * Fields:
+   * ...this.pred... - IPred<T>
+   * 
+   * Methods:
+   * ...this.visitMtList(MtList<T>)... - Boolean
+   * ...this.visitConsList(ConsList<T>)... - Boolean
+   * ...this.apply(IList<T>)... - Boolean
+   */
+
+  // visits the empty list
+  public Boolean visitMtList(MtList<T> mt) {
+    return false;
+  }
+
+  // visits the cons list
+  public Boolean visitConsList(ConsList<T> cons) {
+    return this.pred.apply(cons.first) || this.apply(cons.rest);
+  }
+
+  // applies the list of courses
+  public Boolean apply(IList<T> loc) {
+    return loc.accept(this);
+  }
+
+}
+
+// course examples and tests
+class ExamplesCourses {
+
+  Course c1 = new Course("Course 1", new MtList<Course>());
+  Course c2 = new Course("Course 2", new ConsList<Course>(this.c1, new MtList<Course>()));
+  Course c3 = new Course("Course 3", new ConsList<Course>(this.c2, new MtList<Course>()));
+  Course c4 = new Course("Course 4", new ConsList<Course>(this.c3, new MtList<Course>()));
+  Course c5 = new Course("Course 5", new ConsList<Course>(this.c3,
+      new ConsList<Course>(new Course("Course 6", new MtList<Course>()), new MtList<Course>())));
+
+  boolean testGetDeepestPathLength(Tester t) {
+    return t.checkExpect(this.c1.getDeepestPathLength(), 0)
+        && t.checkExpect(this.c2.getDeepestPathLength(), 1)
+        && t.checkExpect(this.c3.getDeepestPathLength(), 2)
+        && t.checkExpect(this.c4.getDeepestPathLength(), 3)
+        && t.checkExpect(new DeepestPathLength().apply(c2), 1)
+        && t.checkExpect(this.c5.getDeepestPathLength(), 3);
+  }
+
+  boolean testHasPrereq(Tester t) {
+    return t.checkExpect(this.c1.hasPrereq("Course 1"), false)
+        && t.checkExpect(this.c1.hasPrereq("Course 2"), false)
+        && t.checkExpect(this.c2.hasPrereq("Course 4"), false)
+        && t.checkExpect(this.c4.hasPrereq("Course 2"), true);
+  }
+}
