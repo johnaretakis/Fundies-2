@@ -1,0 +1,832 @@
+import tester.Tester;
+
+//represents a campus tour
+class CampusTour {
+  int startTime; // minutes from midnight
+  ITourLocation startingLocation;
+
+  // values are time and location
+  CampusTour(int startTime, ITourLocation startingLocation) {
+    this.startTime = startTime;
+    this.startingLocation = startingLocation;
+  }
+
+  /*
+   * TEMPLATE:
+   * 
+   * Fields:
+   * ...this.startTime... -int
+   * ...this.startingLocation... -ITourLocation
+   * Methods:
+   * ...this.sameTour(CampusTour)... -boolean
+   */
+
+  // is this tour the same tour as the given one?
+  boolean sameTour(CampusTour other) {
+    return this.startTime == other.startTime
+        && this.startingLocation.sameTourLocation(other.startingLocation);
+  }
+}
+
+// a spot on the tour
+interface ITourLocation {
+
+  /*
+   * @param ITourLocation - spot on the tour
+   * 
+   * @param TourEnd - end of the tour
+   * 
+   * @param Mandatory - mandatory tour
+   * 
+   * @param BranchingTour - tour with branches
+   */
+
+  // tour with the same location as another
+  boolean sameTourLocation(ITourLocation other);
+
+  // tour with same end as other tour
+  boolean sameTourEnd(TourEnd other);
+
+  // tour with same mandatory route as other tour
+  boolean sameMandatory(Mandatory other);
+
+  // tour with same branching as other tour
+  boolean sameBranchingTour(BranchingTour other);
+
+}
+
+//represents a tour location
+abstract class ATourLocation implements ITourLocation {
+  String speech; // the speech to give at this spot on the tour
+
+  // values are a string of speech
+  ATourLocation(String speech) {
+    this.speech = speech;
+  }
+
+  /*
+   * TEMPLATE:
+   * 
+   * Fields:
+   * ...this.speech... -String
+   * 
+   * Methods:
+   * ...this.sameTourLocation(ITourLocation)... -boolean
+   * ...this.sameTourEnd(TourEnd)... -boolean
+   * ...this.sameMandatory(Mandatory)... -boolean
+   * ...this.sameBranchingTour(BranchingTour)... -boolean
+   */
+
+  // tour with the same location as another
+  public abstract boolean sameTourLocation(ITourLocation other);
+
+  // returns false when tour has same end as other tour
+  public boolean sameTourEnd(TourEnd other) {
+    return false;
+  }
+
+  // returns false when tour has same mandatory route as other tour
+  public boolean sameMandatory(Mandatory other) {
+    return false;
+  }
+
+  // returns false when tour has same branches as other tour
+  public boolean sameBranchingTour(BranchingTour other) {
+    return false;
+  }
+
+}
+
+// the end of the tour
+class TourEnd extends ATourLocation {
+  ICampusLocation location;
+
+  TourEnd(String speech, ICampusLocation location) {
+    super(speech);
+    this.location = location;
+  }
+
+  /*
+   * TEMPLATE:
+   * 
+   * Fields:
+   * ...this.speech... -string
+   * ...this.location... -ICampusLocation
+   * Methods:
+   * ...this.sameTourEnd(TourEnd)... -boolean
+   * ...this.sameTourLocation(ITourLocation)... -boolean
+   */
+
+  // determines whether tour is the same based on its end
+  public boolean sameTourEnd(TourEnd other) {
+    return this.speech.equals(other.speech) && this.location.sameCampusLocation(other.location);
+  }
+
+  // determines where tour is the same based on its location
+  public boolean sameTourLocation(ITourLocation other) {
+    return other.sameTourEnd(this);
+  }
+
+}
+
+//represents a mandatory spot on the tour with the next place to go
+class Mandatory extends ATourLocation {
+  ICampusLocation location;
+  ITourLocation next;
+
+  Mandatory(String speech, ICampusLocation location, ITourLocation next) {
+    super(speech);
+    this.location = location;
+    this.next = next;
+  }
+
+  /*
+   * TEMPLATE:
+   * 
+   * Fields:
+   * ...this.speech... -string
+   * ...this.location... -ICampusLocation
+   * ...this.next... -ITourLocation
+   * Methods:
+   * ...this.sameTourLocation(ITourLocation)... -boolean
+   * ...this.sameMandatory(Mandatory)... -boolean
+   */
+
+  // determines if tour is same based on mandatory location
+  public boolean sameTourLocation(ITourLocation other) {
+    return other.sameMandatory(this);
+  }
+
+  // determines if mandatory is same
+  public boolean sameMandatory(Mandatory other) {
+    return this.speech.equals(other.speech) && this.location.sameCampusLocation(other.location)
+        && this.next.sameTourLocation(other.next);
+  }
+
+}
+
+// up to the tour guide where to go next
+class BranchingTour extends ATourLocation {
+  ITourLocation option1;
+  ITourLocation option2;
+
+  BranchingTour(String speech, ITourLocation option1, ITourLocation option2) {
+    super(speech);
+    this.option1 = option1;
+    this.option2 = option2;
+  }
+
+  /*
+   * TEMPLATE:
+   * 
+   * Fields:
+   * ...this.speech... -string
+   * ...this.option1... -ITourLocation
+   * ...this.option2... -ITourLocation
+   * Methods:
+   * ...this.sameTourLocation(ITourLocation)... -boolean
+   * ...this.sameBranchingTour(BranchingTour)... -boolean
+   */
+
+  // determines if tour is same based on branching
+  public boolean sameTourLocation(ITourLocation other) {
+    return other.sameBranchingTour(this);
+  }
+
+  // determines if tour is same based on options of branches
+  public boolean sameBranchingTour(BranchingTour other) {
+    return this.speech.equals(other.speech) && ((this.option1.sameTourLocation(other.option1)
+        && this.option2.sameTourLocation(other.option2))
+        || (this.option1.sameTourLocation(other.option2)
+            && this.option2.sameTourLocation(other.option1)));
+  }
+
+}
+
+//represents a campus location
+interface ICampusLocation {
+
+  /*
+   * @param ICampusLocation - spot on the tour
+   * 
+   * @param Building - building location
+   * 
+   * @param Quad - quad location
+   */
+
+  // campus location thats the same as another
+  boolean sameCampusLocation(ICampusLocation other);
+
+  // building location thats the same as another
+  boolean sameBuildingLocation(Building other);
+
+  // quad location thats the same as another
+  boolean sameQuadLocation(Quad other);
+
+}
+
+//represents a building location on campus
+class Building implements ICampusLocation {
+  String name;
+  Address address;
+
+  Building(String name, Address address) {
+    this.name = name;
+    this.address = address;
+  }
+
+  /*
+   * TEMPLATE:
+   * 
+   * Fields:
+   * ...this.name... -string
+   * ...this.address... -address
+   * Methods:
+   * ...this.sameCampusLocation(ICampusLocation)... -boolean
+   * ...this.sameBuildingLocation(Building)... -boolean
+   * ...this.sameQuadLocation(Quad)... -boolean
+   */
+
+  // determines if the location of the campus is the same
+  public boolean sameCampusLocation(ICampusLocation other) {
+    return other.sameBuildingLocation(this);
+  }
+
+  // determines if the buildings have the same location
+  public boolean sameBuildingLocation(Building other) {
+    return this.name.equals(other.name) && this.address.sameAddress(other.address);
+  }
+
+  // returns false if the quads have the same location
+  public boolean sameQuadLocation(Quad other) {
+    return false;
+  }
+
+}
+
+//represents the street and number address
+class Address {
+  String street;
+  int number;
+
+  Address(String street, int number) {
+    this.number = number;
+    this.street = street;
+  }
+
+  /*
+   * TEMPLATE:
+   * 
+   * Fields:
+   * ...this.number... -int
+   * ...this.street... -street
+   * Methods:
+   * ...this.sameAddress(Address)... -boolean
+   */
+
+  // determines if the address are the same
+  boolean sameAddress(Address other) {
+    return this.street.equals(other.street) && this.number == other.number;
+  }
+}
+
+//represents quad locaations on campus
+class Quad implements ICampusLocation {
+  String name;
+  ILoCampusLocation surroundings; // in clockwise order, starting north
+
+  Quad(String name, ILoCampusLocation surroundings) {
+    this.name = name;
+    this.surroundings = surroundings;
+  }
+
+  /*
+   * TEMPLATE:
+   * 
+   * Fields:
+   * ...this.number... -int
+   * ...this.street... -street
+   * Methods:
+   * ...this.sameCampusLocation(ICampusLocation)... -boolean
+   * ...this.sameBuildingLocation(Building)... -boolean
+   * ...this.sameQuadLocation(Quad)... -boolean
+   */
+
+  // determines if campuses have same location based on quads
+  public boolean sameCampusLocation(ICampusLocation other) {
+    return other.sameQuadLocation(this);
+  }
+
+  // returns false if buildings have same location
+  public boolean sameBuildingLocation(Building other) {
+    return false;
+  }
+
+  // determines if quads have same location
+  public boolean sameQuadLocation(Quad other) {
+    return this.name.equals(other.name)
+        && this.surroundings.sameILoCampusLocation(other.surroundings);
+  }
+
+}
+
+//represents a list of campus locations
+interface ILoCampusLocation {
+
+  /*
+   * @param ICampusLocation - spot on the tour
+   * 
+   * @param MtLoCampusLocation - empty list of locations
+   * 
+   * @param ConsLoCampusLocation - list of locations
+   */
+
+  // campus location thats the same as another
+  boolean sameILoCampusLocation(ILoCampusLocation other);
+
+  // empty list of campus locations
+  boolean sameMtLoCampusLocation(MtLoCampusLocation other);
+
+  // list of campus locations that are the same as others
+  boolean sameConsLoCampusLocation(ConsLoCampusLocation other);
+
+}
+
+////MtLoCampusLocation class
+class MtLoCampusLocation implements ILoCampusLocation {
+
+  /*
+   * TEMPLATE:
+   * 
+   * Methods:
+   * ..this.sameILoCampusLocation... - boolean
+   * ...this.sameMtLoCampusLocation... -boolean
+   * ...this.sameConsLoCampusLocation... - boolean
+   */
+
+  // determines if locatiion is same as other location
+  public boolean sameILoCampusLocation(ILoCampusLocation other) {
+    return other.sameMtLoCampusLocation(this);
+  }
+
+  // returns true if list are empty
+  public boolean sameMtLoCampusLocation(MtLoCampusLocation other) {
+    return true;
+  }
+
+  // returns false if locations are in list
+  public boolean sameConsLoCampusLocation(ConsLoCampusLocation other) {
+    return false;
+  }
+}
+
+//ConsLoCampusLocation class
+class ConsLoCampusLocation implements ILoCampusLocation {
+  ICampusLocation first;
+  ILoCampusLocation rest;
+
+  ConsLoCampusLocation(ICampusLocation first, ILoCampusLocation rest) {
+    this.first = first;
+    this.rest = rest;
+  }
+
+  /*
+   * TEMPLATE:
+   * 
+   * Methods:
+   * ..this.sameILoCampusLocation... - boolean
+   * ...this.sameMtLoCampusLocation... -boolean
+   * ...this.sameConsLoCampusLocation... - boolean
+   */
+
+  // returns whether the list is the same
+  public boolean sameILoCampusLocation(ILoCampusLocation other) {
+    return other.sameConsLoCampusLocation(this);
+  }
+
+  // returns false if the list is empty
+  public boolean sameMtLoCampusLocation(MtLoCampusLocation other) {
+    return false;
+  }
+
+  // returns where the first and rest of one list is the same the other list
+  public boolean sameConsLoCampusLocation(ConsLoCampusLocation other) {
+    return this.first.sameCampusLocation(other.first)
+        && this.rest.sameILoCampusLocation(other.rest);
+  }
+}
+
+//examples class
+class ExamplesCampus {
+
+  // address examples
+  Address add1 = new Address("hello", 7);
+  Address add2 = new Address("hello", 7);
+  Address add3 = new Address("hello", 7);
+  Address add4 = new Address("bye", 4);
+  Address add5 = new Address("Hello", 7);
+  Address add6 = new Address("hello", 9);
+
+  // building ICampusLocation examples
+  ICampusLocation bldg1 = new Building("bldg1", add1);
+  ICampusLocation bldg2 = new Building("bldg2", add4);
+  ICampusLocation bldg3 = new Building("bldg1", add1);
+  ICampusLocation bldg4 = new Building("bldg1", add1);
+
+  // ending ICampusLocation examples;
+  ITourLocation end1 = new TourEnd("speech", bldg1);
+  ITourLocation end2 = new TourEnd("speech", bldg1);
+  ITourLocation end3 = new TourEnd("speech2", bldg1);
+  ITourLocation end4 = new TourEnd("speech", bldg2);
+  ITourLocation end5 = new TourEnd("speech", bldg3);
+  ITourLocation end6 = new TourEnd("speech", bldg1);
+
+  // empty ICampusLocation examples
+  ILoCampusLocation mt = new MtLoCampusLocation();
+  ILoCampusLocation mt1 = new MtLoCampusLocation();
+  ILoCampusLocation mt2 = new MtLoCampusLocation();
+
+  // location ICampusLocation examples
+  ILoCampusLocation loc1 = new ConsLoCampusLocation(bldg1,
+      new ConsLoCampusLocation(bldg2, new ConsLoCampusLocation(bldg3, mt)));
+  ILoCampusLocation loc2 = new ConsLoCampusLocation(bldg3,
+      new ConsLoCampusLocation(bldg2, new ConsLoCampusLocation(bldg1, mt)));
+  ILoCampusLocation loc3 = new ConsLoCampusLocation(bldg2,
+      new ConsLoCampusLocation(bldg3, new ConsLoCampusLocation(bldg1, mt)));
+
+  // quad ICampusLocation examples
+  ICampusLocation q1 = new Quad("q1", mt);
+  ICampusLocation q2 = new Quad("q2", loc1);
+  ICampusLocation q3 = new Quad("q3", loc1);
+  ICampusLocation q4 = new Quad("q2", loc1);
+  ICampusLocation q5 = new Quad("q2", loc1);
+  ICampusLocation q6 = new Quad("q2", loc2);
+  ICampusLocation q7 = new Quad("q2", loc3);
+
+  // location ICampusLocation examples
+  ILoCampusLocation loc4 = new ConsLoCampusLocation(q1,
+      new ConsLoCampusLocation(bldg4, new ConsLoCampusLocation(q5, mt)));
+  ILoCampusLocation loc5 = new ConsLoCampusLocation(q1,
+      new ConsLoCampusLocation(bldg4, new ConsLoCampusLocation(q5, mt)));
+  ILoCampusLocation loc6 = new ConsLoCampusLocation(q1,
+      new ConsLoCampusLocation(bldg4, new ConsLoCampusLocation(q5, mt)));
+  ILoCampusLocation loc7 = new ConsLoCampusLocation(q5,
+      new ConsLoCampusLocation(bldg4, new ConsLoCampusLocation(q1, mt)));
+  ILoCampusLocation loc8 = new ConsLoCampusLocation(q1,
+      new ConsLoCampusLocation(q1, new ConsLoCampusLocation(bldg4, mt)));
+
+  // quad ICampusLocation examples
+  ICampusLocation q8 = new Quad("q8", loc4);
+  ICampusLocation q9 = new Quad("q8", loc4);
+  ICampusLocation q10 = new Quad("q8", loc4);
+
+  // mandatory ITourLocation examples
+  ITourLocation mand1 = new Mandatory("speech", bldg4, end1);
+  ITourLocation mand2 = new Mandatory("speech", bldg4, end1);
+  ITourLocation mand3 = new Mandatory("speech", bldg4, end1);
+  ITourLocation mand4 = new Mandatory("speech", bldg3, mand1);
+  ITourLocation mand5 = new Mandatory("speech", bldg3, mand1);
+  ITourLocation mand6 = new Mandatory("speech", bldg3, mand1);
+  ITourLocation mand7 = new Mandatory("speechA", bldg3, mand1);
+  ITourLocation mand8 = new Mandatory("speech", bldg4, mand1);
+
+  // branch ITourLocation examples
+  ITourLocation branch1 = new BranchingTour("speech", end1, end4);
+  ITourLocation branch2 = new BranchingTour("speech", end1, end4);
+  ITourLocation branch3 = new BranchingTour("speech", end1, end4);
+  ITourLocation branch4 = new BranchingTour("speech", mand1, branch1);
+  ITourLocation branch5 = new BranchingTour("speech", mand1, branch1);
+  ITourLocation branch6 = new BranchingTour("speech", mand1, branch1);
+  ITourLocation branch7 = new BranchingTour("speech", branch1, mand1);
+  ITourLocation branch8 = new BranchingTour("speech", branch1, mand1);
+  ITourLocation branch9 = new BranchingTour("speech", branch1, mand1);
+  ITourLocation branch10 = new BranchingTour("speech", mand8, branch3);
+  ITourLocation branch11 = new BranchingTour("speech", end3, end4);
+  ITourLocation branch12 = new BranchingTour("speech", branch4, mand7);
+
+  // campus tour examples
+  CampusTour tour1 = new CampusTour(1200, end1);
+  CampusTour tour2 = new CampusTour(1201, end1);
+  CampusTour tour3 = new CampusTour(1200, end2);
+  CampusTour tour4 = new CampusTour(1200, end6);
+  CampusTour tour5 = new CampusTour(1300, branch4);
+  CampusTour tour6 = new CampusTour(1300, branch7);
+  CampusTour tour8 = new CampusTour(1300, branch9);
+  CampusTour tour9 = new CampusTour(1400, branch4);
+  CampusTour tour10 = new CampusTour(1500, branch10);
+
+  // Tests the CampusTour.sameTour(CampusTour) method
+  boolean testSameTour(Tester t) {
+    return t.checkExpect(this.tour1.sameTour(this.tour1), true)
+        && t.checkExpect(this.tour1.sameTour(this.tour2), false)
+        && t.checkExpect(this.tour1.sameTour(this.tour3), true)
+        && t.checkExpect(this.tour3.sameTour(this.tour1), true)
+        && t.checkExpect(this.tour3.sameTour(this.tour4), true)
+        && t.checkExpect(this.tour4.sameTour(this.tour3), true)
+        && t.checkExpect(this.tour1.sameTour(this.tour4), true)
+        && t.checkExpect(this.tour4.sameTour(this.tour1), true)
+        && t.checkExpect(this.tour5.sameTour(this.tour5), true)
+        && t.checkExpect(this.tour5.sameTour(this.tour6), true)
+        && t.checkExpect(this.tour6.sameTour(this.tour5), true)
+        && t.checkExpect(this.tour6.sameTour(this.tour8), true)
+        && t.checkExpect(this.tour8.sameTour(this.tour6), true)
+        && t.checkExpect(this.tour5.sameTour(this.tour8), true)
+        && t.checkExpect(this.tour8.sameTour(this.tour5), true)
+        && t.checkExpect(this.tour1.sameTour(this.tour10), false)
+        && t.checkExpect(this.tour10.sameTour(this.tour1), false)
+        && t.checkExpect(this.tour1.sameTour(this.tour5), false)
+        && t.checkExpect(this.tour5.sameTour(this.tour1), false);
+  }
+
+  // Tests the ITourLocation.sameTourLocation(ITourLocation) method
+  boolean testSameTourLocation(Tester t) {
+    return t.checkExpect(this.end1.sameTourLocation(this.end1), true)
+        && t.checkExpect(this.end1.sameTourLocation(this.end2), true)
+        && t.checkExpect(this.end2.sameTourLocation(this.end1), true)
+        && t.checkExpect(this.end2.sameTourLocation(this.end6), true)
+        && t.checkExpect(this.end6.sameTourLocation(this.end2), true)
+        && t.checkExpect(this.end1.sameTourLocation(this.end6), true)
+        && t.checkExpect(this.end6.sameTourLocation(this.end1), true)
+        && t.checkExpect(this.end1.sameTourLocation(this.end3), false)
+        && t.checkExpect(this.end1.sameTourLocation(this.end4), false)
+        && t.checkExpect(this.end1.sameTourLocation(this.mand1), false)
+        && t.checkExpect(this.end1.sameTourLocation(this.mand4), false)
+        && t.checkExpect(this.end1.sameTourLocation(this.branch1), false)
+        && t.checkExpect(this.end1.sameTourLocation(this.branch10), false)
+        && t.checkExpect(this.mand1.sameTourLocation(this.mand1), true)
+        && t.checkExpect(this.mand1.sameTourLocation(this.mand2), true)
+        && t.checkExpect(this.mand2.sameTourLocation(this.mand1), true)
+        && t.checkExpect(this.mand2.sameTourLocation(this.mand3), true)
+        && t.checkExpect(this.mand3.sameTourLocation(this.mand2), true)
+        && t.checkExpect(this.mand1.sameTourLocation(this.mand3), true)
+        && t.checkExpect(this.mand3.sameTourLocation(this.mand1), true)
+        && t.checkExpect(this.mand1.sameTourLocation(this.mand4), false)
+        && t.checkExpect(this.mand1.sameTourLocation(this.end1), false)
+        && t.checkExpect(this.mand1.sameTourLocation(this.end4), false)
+        && t.checkExpect(this.mand1.sameTourLocation(this.branch1), false)
+        && t.checkExpect(this.mand1.sameTourLocation(this.branch10), false)
+        && t.checkExpect(this.branch1.sameTourLocation(this.branch1), true)
+        && t.checkExpect(this.branch1.sameTourLocation(this.branch2), true)
+        && t.checkExpect(this.branch2.sameTourLocation(this.branch1), true)
+        && t.checkExpect(this.branch2.sameTourLocation(this.branch3), true)
+        && t.checkExpect(this.branch3.sameTourLocation(this.branch2), true)
+        && t.checkExpect(this.branch1.sameTourLocation(this.branch3), true)
+        && t.checkExpect(this.branch3.sameTourLocation(this.branch1), true)
+        && t.checkExpect(this.branch4.sameTourLocation(this.branch4), true)
+        && t.checkExpect(this.branch4.sameTourLocation(this.branch5), true)
+        && t.checkExpect(this.branch5.sameTourLocation(this.branch4), true)
+        && t.checkExpect(this.branch5.sameTourLocation(this.branch6), true)
+        && t.checkExpect(this.branch6.sameTourLocation(this.branch5), true)
+        && t.checkExpect(this.branch4.sameTourLocation(this.branch6), true)
+        && t.checkExpect(this.branch6.sameTourLocation(this.branch4), true)
+        && t.checkExpect(this.branch1.sameTourLocation(this.branch4), false)
+        && t.checkExpect(this.branch4.sameTourLocation(this.branch1), false)
+        && t.checkExpect(this.branch1.sameTourLocation(this.branch10), false)
+        && t.checkExpect(this.branch1.sameTourLocation(this.branch11), false)
+        && t.checkExpect(this.branch11.sameTourLocation(this.branch12), false)
+        && t.checkExpect(this.branch1.sameTourLocation(this.branch4), false);
+  }
+
+  // Tests the ITourLocation.sameTourEnd(TourEnd) method
+  boolean testSameTourEnd(Tester t) {
+    return t.checkExpect(this.end1.sameTourEnd((TourEnd) this.end1), true)
+        && t.checkExpect(this.end1.sameTourEnd((TourEnd) this.end2), true)
+        && t.checkExpect(this.end2.sameTourEnd((TourEnd) this.end1), true)
+        && t.checkExpect(this.end2.sameTourEnd((TourEnd) this.end6), true)
+        && t.checkExpect(this.end6.sameTourEnd((TourEnd) this.end2), true)
+        && t.checkExpect(this.end1.sameTourEnd((TourEnd) this.end6), true)
+        && t.checkExpect(this.end6.sameTourEnd((TourEnd) this.end1), true)
+        && t.checkExpect(this.end1.sameTourEnd((TourEnd) this.end3), false)
+        && t.checkExpect(this.end1.sameTourEnd((TourEnd) this.end4), false)
+        && t.checkExpect(this.mand1.sameTourEnd((TourEnd) this.end1), false)
+        && t.checkExpect(this.mand3.sameTourEnd((TourEnd) this.end1), false)
+        && t.checkExpect(this.branch1.sameTourEnd((TourEnd) this.end1), false)
+        && t.checkExpect(this.branch2.sameTourEnd((TourEnd) this.end1), false)
+        && t.checkExpect(this.branch3.sameTourEnd((TourEnd) this.end1), false)
+        && t.checkExpect(this.branch4.sameTourEnd((TourEnd) this.end1), false)
+        && t.checkExpect(this.branch5.sameTourEnd((TourEnd) this.end2), false)
+        && t.checkExpect(this.branch6.sameTourEnd((TourEnd) this.end3), false);
+  }
+
+  // Tests the ITourLocation.sameMandatory(BranchingTour) method
+  boolean testSameMandatory(Tester t) {
+    return t.checkExpect(this.end1.sameMandatory((Mandatory) this.mand1), false)
+        && t.checkExpect(this.end1.sameMandatory((Mandatory) this.mand4), false)
+        && t.checkExpect(this.mand1.sameMandatory((Mandatory) this.mand1), true)
+        && t.checkExpect(this.mand1.sameMandatory((Mandatory) this.mand2), true)
+        && t.checkExpect(this.mand2.sameMandatory((Mandatory) this.mand1), true)
+        && t.checkExpect(this.mand2.sameMandatory((Mandatory) this.mand3), true)
+        && t.checkExpect(this.mand3.sameMandatory((Mandatory) this.mand2), true)
+        && t.checkExpect(this.mand1.sameMandatory((Mandatory) this.mand3), true)
+        && t.checkExpect(this.mand3.sameMandatory((Mandatory) this.mand1), true)
+        && t.checkExpect(this.mand1.sameMandatory((Mandatory) this.mand4), false)
+        && t.checkExpect(this.branch1.sameMandatory((Mandatory) this.mand1), false)
+        && t.checkExpect(this.branch1.sameMandatory((Mandatory) this.mand4), false);
+  }
+
+  // Tests the ITourLocations.sameBranchingTour(BranchingTour) method
+  boolean testSameBranchingTour(Tester t) {
+    return t.checkExpect(this.end1.sameBranchingTour((BranchingTour) this.branch1), false)
+        && t.checkExpect(this.end1.sameBranchingTour((BranchingTour) this.branch10), false)
+        && t.checkExpect(this.mand1.sameBranchingTour((BranchingTour) this.branch1), false)
+        && t.checkExpect(this.mand1.sameBranchingTour((BranchingTour) this.branch10), false)
+        && t.checkExpect(this.branch1.sameBranchingTour((BranchingTour) this.branch1), true)
+        && t.checkExpect(this.branch1.sameBranchingTour((BranchingTour) this.branch2), true)
+        && t.checkExpect(this.branch2.sameBranchingTour((BranchingTour) this.branch1), true)
+        && t.checkExpect(this.branch2.sameBranchingTour((BranchingTour) this.branch3), true)
+        && t.checkExpect(this.branch3.sameBranchingTour((BranchingTour) this.branch2), true)
+        && t.checkExpect(this.branch1.sameBranchingTour((BranchingTour) this.branch3), true)
+        && t.checkExpect(this.branch3.sameBranchingTour((BranchingTour) this.branch1), true)
+        && t.checkExpect(this.branch4.sameBranchingTour((BranchingTour) this.branch4), true)
+        && t.checkExpect(this.branch4.sameBranchingTour((BranchingTour) this.branch5), true)
+        && t.checkExpect(this.branch5.sameBranchingTour((BranchingTour) this.branch4), true)
+        && t.checkExpect(this.branch5.sameBranchingTour((BranchingTour) this.branch6), true)
+        && t.checkExpect(this.branch6.sameBranchingTour((BranchingTour) this.branch5), true)
+        && t.checkExpect(this.branch4.sameBranchingTour((BranchingTour) this.branch6), true)
+        && t.checkExpect(this.branch6.sameBranchingTour((BranchingTour) this.branch4), true)
+        && t.checkExpect(this.branch1.sameBranchingTour((BranchingTour) this.branch4), false)
+        && t.checkExpect(this.branch4.sameBranchingTour((BranchingTour) this.branch1), false)
+        && t.checkExpect(this.branch1.sameBranchingTour((BranchingTour) this.branch10), false)
+        && t.checkExpect(this.branch1.sameBranchingTour((BranchingTour) this.branch11), false)
+        && t.checkExpect(this.branch11.sameBranchingTour((BranchingTour) this.branch12), false)
+        && t.checkExpect(this.branch1.sameBranchingTour((BranchingTour) this.branch4), false);
+  }
+
+  // Tests the ICampusLocation.sameCampusLocation(ICampusLocation) method
+  boolean testSameCampusLocation(Tester t) {
+    return t.checkExpect(this.bldg1.sameCampusLocation(this.bldg1), true)
+        && t.checkExpect(this.bldg1.sameCampusLocation(this.bldg3), true)
+        && t.checkExpect(this.bldg3.sameCampusLocation(this.bldg1), true)
+        && t.checkExpect(this.bldg3.sameCampusLocation(this.bldg4), true)
+        && t.checkExpect(this.bldg4.sameCampusLocation(this.bldg3), true)
+        && t.checkExpect(this.bldg1.sameCampusLocation(this.bldg2), false)
+        && t.checkExpect(this.bldg2.sameCampusLocation(this.bldg1), false)
+        && t.checkExpect(this.bldg1.sameCampusLocation(this.q1), false)
+        && t.checkExpect(this.bldg2.sameCampusLocation(this.q2), false)
+        && t.checkExpect(this.q1.sameCampusLocation(this.q1), true)
+        && t.checkExpect(this.q2.sameCampusLocation(this.q2), true)
+        && t.checkExpect(this.q2.sameCampusLocation(this.q4), true)
+        && t.checkExpect(this.q4.sameCampusLocation(this.q2), true)
+        && t.checkExpect(this.q4.sameCampusLocation(this.q5), true)
+        && t.checkExpect(this.q5.sameCampusLocation(this.q4), true)
+        && t.checkExpect(this.q2.sameCampusLocation(this.q5), true)
+        && t.checkExpect(this.q5.sameCampusLocation(this.q2), true)
+        && t.checkExpect(this.q2.sameCampusLocation(this.q3), false)
+        && t.checkExpect(this.q3.sameCampusLocation(this.q2), false)
+        && t.checkExpect(this.q1.sameCampusLocation(this.q2), false)
+        && t.checkExpect(this.q2.sameCampusLocation(this.q1), false)
+        && t.checkExpect(this.q2.sameCampusLocation(this.bldg1), false)
+        && t.checkExpect(this.q2.sameCampusLocation(this.bldg2), false)
+        && t.checkExpect(this.q7.sameCampusLocation((Quad) this.q2), false)
+        && t.checkExpect(this.q2.sameCampusLocation((Quad) this.q7), false)
+        && t.checkExpect(this.q2.sameCampusLocation((Quad) this.q6), true)
+        && t.checkExpect(this.q6.sameCampusLocation((Quad) this.q2), true)
+        && t.checkExpect(this.q8.sameCampusLocation((Quad) this.q8), true)
+        && t.checkExpect(this.q8.sameCampusLocation((Quad) this.q8), true)
+        && t.checkExpect(this.q8.sameCampusLocation((Quad) this.q9), true)
+        && t.checkExpect(this.q9.sameCampusLocation((Quad) this.q8), true)
+        && t.checkExpect(this.q9.sameCampusLocation((Quad) this.q10), true)
+        && t.checkExpect(this.q10.sameCampusLocation((Quad) this.q9), true)
+        && t.checkExpect(this.q8.sameCampusLocation((Quad) this.q10), true)
+        && t.checkExpect(this.q10.sameCampusLocation((Quad) this.q8), true);
+  }
+
+  // Tests the ICampusLocation.sameBuildingLocation(Building) method
+  boolean testSameBuildingLocation(Tester t) {
+    return t.checkExpect(this.bldg1.sameBuildingLocation((Building) this.bldg1), true)
+        && t.checkExpect(this.bldg1.sameBuildingLocation((Building) this.bldg3), true)
+        && t.checkExpect(this.bldg3.sameBuildingLocation((Building) this.bldg1), true)
+        && t.checkExpect(this.bldg3.sameBuildingLocation((Building) this.bldg4), true)
+        && t.checkExpect(this.bldg4.sameBuildingLocation((Building) this.bldg3), true)
+        && t.checkExpect(this.bldg1.sameBuildingLocation((Building) this.bldg2), false)
+        && t.checkExpect(this.bldg2.sameBuildingLocation((Building) this.bldg1), false)
+        && t.checkExpect(this.q2.sameBuildingLocation((Building) this.bldg1), false)
+        && t.checkExpect(this.q2.sameBuildingLocation((Building) this.bldg2), false);
+  }
+
+  // Tests the ICampusLocation.sameQuadLocation(Quad) method
+  boolean testSameQuadLocation(Tester t) {
+    return t.checkExpect(this.bldg1.sameQuadLocation((Quad) this.q1), false)
+        && t.checkExpect(this.bldg2.sameQuadLocation((Quad) this.q2), false)
+        && t.checkExpect(this.q1.sameQuadLocation((Quad) this.q1), true)
+        && t.checkExpect(this.q2.sameQuadLocation((Quad) this.q2), true)
+        && t.checkExpect(this.q2.sameQuadLocation((Quad) this.q4), true)
+        && t.checkExpect(this.q4.sameQuadLocation((Quad) this.q2), true)
+        && t.checkExpect(this.q4.sameQuadLocation((Quad) this.q5), true)
+        && t.checkExpect(this.q5.sameQuadLocation((Quad) this.q4), true)
+        && t.checkExpect(this.q2.sameQuadLocation((Quad) this.q5), true)
+        && t.checkExpect(this.q5.sameQuadLocation((Quad) this.q2), true)
+        && t.checkExpect(this.q2.sameQuadLocation((Quad) this.q3), false)
+        && t.checkExpect(this.q3.sameQuadLocation((Quad) this.q2), false)
+        && t.checkExpect(this.q1.sameQuadLocation((Quad) this.q2), false)
+        && t.checkExpect(this.q2.sameQuadLocation((Quad) this.q1), false)
+        && t.checkExpect(this.q7.sameQuadLocation((Quad) this.q2), false)
+        && t.checkExpect(this.q2.sameQuadLocation((Quad) this.q7), false)
+        && t.checkExpect(this.q2.sameQuadLocation((Quad) this.q6), true)
+        && t.checkExpect(this.q6.sameQuadLocation((Quad) this.q2), true)
+        && t.checkExpect(this.q8.sameQuadLocation((Quad) this.q8), true)
+        && t.checkExpect(this.q8.sameQuadLocation((Quad) this.q8), true)
+        && t.checkExpect(this.q8.sameQuadLocation((Quad) this.q9), true)
+        && t.checkExpect(this.q9.sameQuadLocation((Quad) this.q8), true)
+        && t.checkExpect(this.q9.sameQuadLocation((Quad) this.q10), true)
+        && t.checkExpect(this.q10.sameQuadLocation((Quad) this.q9), true)
+        && t.checkExpect(this.q8.sameQuadLocation((Quad) this.q10), true)
+        && t.checkExpect(this.q10.sameQuadLocation((Quad) this.q8), true);
+  }
+
+  // Tests the Address.sameAddress(Address) method
+  boolean testSameAddress(Tester t) {
+    return t.checkExpect(this.add1.sameAddress(this.add1), true)
+        && t.checkExpect(this.add1.sameAddress(this.add2), true)
+        && t.checkExpect(this.add2.sameAddress(this.add1), true)
+        && t.checkExpect(this.add2.sameAddress(this.add3), true)
+        && t.checkExpect(this.add3.sameAddress(this.add2), true)
+        && t.checkExpect(this.add1.sameAddress(this.add3), true)
+        && t.checkExpect(this.add3.sameAddress(this.add1), true)
+        && t.checkExpect(this.add1.sameAddress(this.add4), false)
+        && t.checkExpect(this.add4.sameAddress(this.add1), false)
+        && t.checkExpect(this.add1.sameAddress(this.add5), false)
+        && t.checkExpect(this.add5.sameAddress(this.add1), false)
+        && t.checkExpect(this.add1.sameAddress(this.add6), false)
+        && t.checkExpect(this.add6.sameAddress(this.add1), false);
+  }
+
+  // Tests the ILoCampusLocation.sameILoCampusLocation(ILoCampusLocation) method
+  boolean testSameILoCampusLocation(Tester t) {
+    return t.checkExpect(this.mt.sameILoCampusLocation(this.mt), true)
+        && t.checkExpect(this.mt.sameILoCampusLocation(this.mt1), true)
+        && t.checkExpect(this.mt1.sameILoCampusLocation(this.mt), true)
+        && t.checkExpect(this.mt1.sameILoCampusLocation(this.mt2), true)
+        && t.checkExpect(this.mt2.sameILoCampusLocation(this.mt1), true)
+        && t.checkExpect(this.mt.sameILoCampusLocation(this.mt2), true)
+        && t.checkExpect(this.mt2.sameILoCampusLocation(this.mt), true)
+        && t.checkExpect(this.mt.sameILoCampusLocation(this.loc1), false)
+        && t.checkExpect(this.mt.sameILoCampusLocation(this.loc8), false)
+        && t.checkExpect(this.loc1.sameILoCampusLocation(this.loc1), true)
+        && t.checkExpect(this.loc1.sameILoCampusLocation(this.loc2), true)
+        && t.checkExpect(this.loc2.sameILoCampusLocation(this.loc1), true)
+        && t.checkExpect(this.loc1.sameILoCampusLocation(this.loc3), false)
+        && t.checkExpect(this.loc3.sameILoCampusLocation(this.loc1), false)
+        && t.checkExpect(this.loc4.sameILoCampusLocation(this.loc4), true)
+        && t.checkExpect(this.loc4.sameILoCampusLocation(this.loc5), true)
+        && t.checkExpect(this.loc5.sameILoCampusLocation(this.loc4), true)
+        && t.checkExpect(this.loc5.sameILoCampusLocation(this.loc6), true)
+        && t.checkExpect(this.loc6.sameILoCampusLocation(this.loc5), true)
+        && t.checkExpect(this.loc4.sameILoCampusLocation(this.loc6), true)
+        && t.checkExpect(this.loc6.sameILoCampusLocation(this.loc4), true)
+        && t.checkExpect(this.loc6.sameILoCampusLocation(this.loc7), false)
+        && t.checkExpect(this.loc7.sameILoCampusLocation(this.loc6), false)
+        && t.checkExpect(this.loc7.sameILoCampusLocation(this.loc8), false)
+        && t.checkExpect(this.loc8.sameILoCampusLocation(this.loc7), false)
+        && t.checkExpect(this.loc6.sameILoCampusLocation(this.loc8), false)
+        && t.checkExpect(this.loc8.sameILoCampusLocation(this.loc6), false)
+        && t.checkExpect(this.loc1.sameILoCampusLocation(this.mt), false)
+        && t.checkExpect(this.loc8.sameILoCampusLocation(this.mt), false);
+  }
+
+  // Tests the ILoCampusLocation.sameMtLoCampusLocation(MtCampusLocation) method
+  boolean testSameMtLoCampusLocation(Tester t) {
+    return t.checkExpect(this.mt.sameMtLoCampusLocation((MtLoCampusLocation) this.mt), true)
+        && t.checkExpect(this.mt.sameMtLoCampusLocation((MtLoCampusLocation) this.mt1), true)
+        && t.checkExpect(this.mt1.sameMtLoCampusLocation((MtLoCampusLocation) this.mt), true)
+        && t.checkExpect(this.mt1.sameMtLoCampusLocation((MtLoCampusLocation) this.mt2), true)
+        && t.checkExpect(this.mt2.sameMtLoCampusLocation((MtLoCampusLocation) this.mt1), true)
+        && t.checkExpect(this.mt.sameMtLoCampusLocation((MtLoCampusLocation) this.mt2), true)
+        && t.checkExpect(this.mt2.sameMtLoCampusLocation((MtLoCampusLocation) this.mt), true)
+        && t.checkExpect(this.loc1.sameMtLoCampusLocation((MtLoCampusLocation) this.mt), false)
+        && t.checkExpect(this.loc8.sameMtLoCampusLocation((MtLoCampusLocation) this.mt), false);
+  }
+
+  // Tests the ILoCampusLocation.sameConsLoCampusLocation(ConsCampusLocation)
+  // method
+  boolean testSameConsLoCampusLocation(Tester t) {
+    return t.checkExpect(this.mt.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc1), false)
+        && t.checkExpect(this.mt.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc8), false)
+        && t.checkExpect(this.loc1.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc1), true)
+        && t.checkExpect(this.loc1.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc2), true)
+        && t.checkExpect(this.loc2.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc1), true)
+        && t.checkExpect(this.loc1.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc3),
+            false)
+        && t.checkExpect(this.loc3.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc1),
+            false)
+        && t.checkExpect(this.loc4.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc4), true)
+        && t.checkExpect(this.loc4.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc5), true)
+        && t.checkExpect(this.loc5.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc4), true)
+        && t.checkExpect(this.loc5.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc6), true)
+        && t.checkExpect(this.loc6.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc5), true)
+        && t.checkExpect(this.loc4.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc6), true)
+        && t.checkExpect(this.loc6.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc4), true)
+        && t.checkExpect(this.loc6.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc7),
+            false)
+        && t.checkExpect(this.loc7.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc6),
+            false)
+        && t.checkExpect(this.loc7.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc8),
+            false)
+        && t.checkExpect(this.loc8.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc7),
+            false)
+        && t.checkExpect(this.loc6.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc8),
+            false)
+        && t.checkExpect(this.loc8.sameConsLoCampusLocation((ConsLoCampusLocation) this.loc6),
+            false);
+  }
+}
