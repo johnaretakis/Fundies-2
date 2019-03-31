@@ -1,0 +1,271 @@
+import tester.Tester;
+
+// a piece of media
+interface IMedia {
+
+  // is this media really old?
+  boolean isReallyOld();
+
+  // are captions available in this language?
+  boolean isCaptionAvailable(String language);
+
+  // a string showing the proper display of the media
+  String format();
+}
+
+
+
+//Represents a piece of media
+abstract class AMedia implements IMedia {
+  String title;
+  ILoString captionOptions;
+
+  AMedia(String title, ILoString captionOptions) {
+    this.title = title;
+    this.captionOptions = captionOptions;
+  }
+
+  // is this media really old?
+  public boolean isReallyOld() {
+    return false;
+  }
+
+  // are captions available in this language?
+  public boolean isCaptionAvailable(String language) {
+    return this.captionOptions.isCaptionAvailable(language);
+  }
+
+  // a string showing the proper display of the media
+  public abstract String format();
+
+}
+
+
+
+// represents a movie
+class Movie extends AMedia {
+  int year;
+
+  Movie(String title, int year, ILoString captionOptions) {
+    super(title, captionOptions);
+    this.year = year;
+  }
+  /* TEMPLATE:
+   * Fields:
+   * ...this.title...           - String
+   * ...this.year...            - int
+   * ...this.captionOptions...  - ILoCaptionOptions
+   * 
+   * Methods:
+   * ...this.isReallyOld()...              - boolean
+   * ...this.isCaptionAvailable(String)... - boolean
+   * ...this.format()...                   - String
+   * 
+   * Methods of Fields:
+   * ...this.captionOptions.isCaptionAvailable(String) - String 
+   */
+
+  // is this media older than 1930?
+  public boolean isReallyOld() {
+    return this.year < 1930;
+  }
+
+  // a string showing the proper display of the media in the form of "title (year)"
+  public String format() {
+    return this.title + " (" + this.year + ")";
+  }
+}
+
+
+
+// represents a TV episode
+class TVEpisode extends AMedia {
+  String showName;
+  int seasonNumber;
+  int episodeOfSeason;
+
+  TVEpisode(String title, String showName, int seasonNumber, int episodeOfSeason,
+      ILoString captionOptions) {
+    super(title, captionOptions);
+    this.showName = showName;
+    this.seasonNumber = seasonNumber;
+    this.episodeOfSeason = episodeOfSeason;
+  }
+  /* TEMPLATE:
+   * Fields:
+   * ...this.title...           - String
+   * ...this.showName...        - String
+   * ...this.seasonNumber...    - int
+   * ...this.episodeOfSeason... - int
+   * ...this.captionOptions...  - ILoCaptionOptions
+   * 
+   * Methods:
+   * ...this.isReallyOld()...              - boolean
+   * ...this.isCaptionAvailable(String)... - boolean
+   * ...this.format()...                   - String
+   * 
+   * Methods of Fields:
+   * ...this.captionOptions.isCaptionAvailable(String) - String 
+   */
+
+  // a string showing the proper display of the media in the form of 
+  // "showName seasonNumber.episodeOfSeason - title"
+  public String format() {
+    return this.showName  + " " + this.seasonNumber + "." 
+        + this.episodeOfSeason + " - " + super.title;
+  }
+}
+
+
+
+// represents a YouTube video
+class YTVideo extends AMedia {
+  String channelName;
+
+  public YTVideo(String title, String channelName, ILoString captionOptions) {
+    super(title, captionOptions);
+    this.channelName = channelName;
+  }
+  /* TEMPLATE:
+   * Fields:
+   * ...this.title...           - String
+   * ...this.channelName...     - String
+   * ...this.captionOptions...  - ILoCaptionOptions
+   * 
+   * Methods:
+   * ...this.isReallyOld()...              - boolean
+   * ...this.isCaptionAvailable(String)... - boolean
+   * ...this.format()...                   - String
+   * 
+   * Methods of Fields:
+   * ...this.captionOptions.isCaptionAvailable(String) - String 
+   */
+
+
+  // a string showing the proper display of the media in the form of "title channelName"
+  public String format() {
+    return super.title  + " by " + this.channelName;
+  }
+}
+
+
+
+// lists of strings
+interface ILoString {
+
+  // is String language in this ILoString?
+  boolean isCaptionAvailable(String language);
+}
+
+// an empty list of strings
+class MtLoString implements ILoString {
+
+  MtLoString() {}
+  /* TEMPLATE: 
+   * Methods:
+   * ...this.isCaptionAvailable(String)... - String
+   */
+
+  // is the String language in this list? In the case of an empty list, no (false).
+  public boolean isCaptionAvailable(String language) {
+    return false;
+  }
+}
+
+
+
+// a non-empty list of strings
+class ConsLoString implements ILoString {
+  String first;
+  ILoString rest;
+
+  ConsLoString(String first, ILoString rest) {
+    this.first = first;
+    this.rest = rest;
+  }
+  /* TEMPLATE: 
+   * Fields:
+   * ...this.first... - String
+   * ...this.rest...  - ILoString
+   * Methods:
+   * ...this.isCaptionAvailable(String)... - String
+   */
+
+  // is the String language in this list?
+  public boolean isCaptionAvailable(String language) {
+    return this.first.equals(language) || this.rest.isCaptionAvailable(language);
+  }
+}
+
+
+
+class ExamplesMedia {
+
+  ILoString mt = new MtLoString();
+  ILoString eng = new ConsLoString("English", mt);
+  ILoString engSpa =  new ConsLoString("English", new ConsLoString("Spanish", mt));
+  ILoString engSpaFre = new ConsLoString("English", new ConsLoString("Spanish",
+      new ConsLoString("French", mt)));
+
+  Movie it = new Movie("IT", 2017, mt);
+  Movie pulpFiction = new Movie("Pulp Fiction", 1994, engSpa);
+  Movie hunchback = new Movie("The Hunchback of Notre Dame", 1923, eng);
+
+  TVEpisode scottsTots = new TVEpisode("Scott's Tots", "The Office", 6, 12, engSpaFre); 
+
+  TVEpisode pilot = new TVEpisode("Pilot", "Any Show", 1, 1, engSpaFre);
+
+  YTVideo burningPopcorn = new YTVideo("Burning Popcorn", "Channel1", mt);
+  YTVideo animals = new YTVideo("Animals", "Animal Planet", 
+      new ConsLoString("English", new ConsLoString("Spanish",
+          new ConsLoString("French", new ConsLoString("Chinese", mt)))));
+
+  //Tests the method IMedia.isReallyOld()
+  boolean testIsReallyOld(Tester t) {
+    return t.checkExpect(this.it.isReallyOld(), false) 
+        && t.checkExpect(this.pulpFiction.isReallyOld(), false) 
+        && t.checkExpect(this.hunchback.isReallyOld(), true) 
+        && t.checkExpect(this.scottsTots.isReallyOld(), false) 
+        && t.checkExpect(this.pilot.isReallyOld(), false) 
+        && t.checkExpect(this.burningPopcorn.isReallyOld(), false) 
+        && t.checkExpect(this.animals.isReallyOld(), false);
+  }
+
+  //Tests the method IMedia.isCaptionAvailable(String)
+  boolean testIsCaptionAvailableMedia(Tester t) {
+    return t.checkExpect(this.it.isCaptionAvailable("English"), false) 
+        && t.checkExpect(this.pulpFiction.isCaptionAvailable("English"), true)
+        && t.checkExpect(this.pulpFiction.isCaptionAvailable("Spanish"), true)
+        && t.checkExpect(this.pulpFiction.isCaptionAvailable("German"), false)
+        && t.checkExpect(this.hunchback.isCaptionAvailable("English"), true) 
+        && t.checkExpect(this.scottsTots.isCaptionAvailable("English"), true) 
+        && t.checkExpect(this.pilot.isCaptionAvailable("English"), true) 
+        && t.checkExpect(this.pilot.isCaptionAvailable("German"), false)
+        && t.checkExpect(this.burningPopcorn.isCaptionAvailable("English"), false) 
+        && t.checkExpect(this.animals.isCaptionAvailable("English"), true);
+  }
+
+  //Tests ILoString.isCaptionAvailable(String)
+  boolean testIsCaptionAvailableILoString(Tester t) {
+    return t.checkExpect(this.eng.isCaptionAvailable("English"), true)
+        && t.checkExpect(this.eng.isCaptionAvailable("Spanish"), false)
+        && t.checkExpect(this.engSpa.isCaptionAvailable("English"), true)
+        && t.checkExpect(this.engSpa.isCaptionAvailable("Spanish"), true)
+        && t.checkExpect(this.engSpa.isCaptionAvailable("French"), false)
+        && t.checkExpect(this.engSpaFre.isCaptionAvailable("English"), true)
+        && t.checkExpect(this.engSpaFre.isCaptionAvailable("Spanish"), true)
+        && t.checkExpect(this.engSpaFre.isCaptionAvailable("French"), true)
+        && t.checkExpect(this.eng.isCaptionAvailable("German"), false);
+  }
+
+  //Tests IMedia.testFormat()
+  boolean testFormat(Tester t) {
+    return t.checkExpect(this.it.format(), "IT (2017)") 
+        && t.checkExpect(this.pulpFiction.format(), "Pulp Fiction (1994)") 
+        && t.checkExpect(this.hunchback.format(), "The Hunchback of Notre Dame (1923)") 
+        && t.checkExpect(this.scottsTots.format(), "The Office 6.12 - Scott's Tots") 
+        && t.checkExpect(this.pilot.format(), "Any Show 1.1 - Pilot") 
+        && t.checkExpect(this.burningPopcorn.format(), "Burning Popcorn by Channel1") 
+        && t.checkExpect(this.animals.format(), "Animals by Animal Planet");
+   }
+ }
